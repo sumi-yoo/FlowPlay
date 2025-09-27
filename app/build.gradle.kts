@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     kotlin("kapt")
     id("com.google.dagger.hilt.android")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -51,7 +52,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-//    implementation(libs.androidx.paging.common.jvm)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -69,25 +69,20 @@ dependencies {
     // Preferences DataStore (Key-Value 저장용)
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     // navigation-compose
-//    implementation("androidx.navigation:navigation-compose:2.9.5")
+    implementation("androidx.navigation:navigation-compose:2.9.5")
     // exoplayer
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-ui:1.3.1")
     // paging
-//    implementation("androidx.paging:paging-runtime:3.2.0")
-//    implementation("androidx.paging:paging-compose:3.2.1")
-    // Paging
     implementation ("androidx.paging:paging-compose:1.0.0-alpha12")
     implementation ("androidx.paging:paging-runtime:3.0.1")
-
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
-//    implementation("androidx.paging:paging-compose:1.1.0-alpha18")
-
     // hilt
     implementation("com.google.dagger:hilt-android:2.50")
     kapt("com.google.dagger:hilt-android-compiler:2.50")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
 }
 
 kapt {

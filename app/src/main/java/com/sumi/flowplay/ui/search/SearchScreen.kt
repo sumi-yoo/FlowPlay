@@ -49,7 +49,10 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 
 @Composable
-fun SearchScreen(viewModel: SearchViewViewModel) {
+fun SearchScreen(
+    viewModel: SearchViewViewModel,
+    onTrackClick: (TrackDto, List<TrackDto>) -> Unit
+) {
     val tracks = viewModel.tracks.collectAsLazyPagingItems()
     val recentSearches by viewModel.recentSearches.collectAsState()
     val focusManager = LocalFocusManager.current
@@ -127,10 +130,16 @@ fun SearchScreen(viewModel: SearchViewViewModel) {
                 // 검색 결과 화면
                 Spacer(modifier = Modifier.height(8.dp))
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(4.dp) // 아이템 사이 간격 4dp
+                    verticalArrangement = Arrangement.spacedBy(8.dp) // 아이템 사이 간격 4dp
                 ) {
                     items(tracks) { track ->
-                        track?.let { TrackItem(it) }
+                        track?.let {
+                            TrackItem(track = it) {
+                                val currentTrackList = (0 until tracks.itemCount)
+                                    .mapNotNull { index -> tracks.peek(index) }
+                                onTrackClick(it, currentTrackList)
+                            }
+                        }
                     }
                 }
             }
@@ -143,11 +152,12 @@ fun SearchScreen(viewModel: SearchViewViewModel) {
 }
 
 @Composable
-fun TrackItem(track: TrackDto?) {
+fun TrackItem(track: TrackDto?, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min),
+            .height(IntrinsicSize.Min)
+            .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
