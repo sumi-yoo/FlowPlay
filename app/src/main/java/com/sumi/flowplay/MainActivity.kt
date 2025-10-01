@@ -4,17 +4,33 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.sumi.flowplay.data.model.TrackDto
-import com.sumi.flowplay.ui.play.PlayerScreen
+import com.sumi.flowplay.ui.player.MiniPlayer
+import com.sumi.flowplay.ui.player.PlayerScreen
+import com.sumi.flowplay.ui.player.PlayerViewModel
+import com.sumi.flowplay.ui.playlist.PlaylistScreen
 import com.sumi.flowplay.ui.search.SearchScreen
 import com.sumi.flowplay.ui.search.SearchViewViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -26,37 +42,92 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
-                val navController = rememberNavController()
-                Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .systemBarsPadding()
-                ) {
-                    NavHost(navController = navController, startDestination = "search") {
-                        composable("search") { backStackEntry ->
-                            val vm: SearchViewViewModel = hiltViewModel(backStackEntry)
-
-                            SearchScreen(
-                                viewModel = vm,
-                                onTrackClick = { track, trackList ->
-                                    backStackEntry.savedStateHandle.set("track", track)
-                                    backStackEntry.savedStateHandle.set("trackList", ArrayList(trackList))
-                                    navController.navigate("player")
-                                }
-                            )
-                        }
-
-                        composable("player") {
-                            val track = navController.previousBackStackEntry
-                                ?.savedStateHandle?.get<TrackDto>("track") ?: return@composable
-                            val trackList = navController.previousBackStackEntry
-                                ?.savedStateHandle?.get<ArrayList<TrackDto>>("trackList") ?: arrayListOf()
-
-                            PlayerScreen(track = track, trackList = trackList)
-                        }
-                    }
-                }
+                MainScreen()
             }
         }
     }
 }
+
+@Composable
+fun MainScreen() {
+    val navController = rememberNavController()
+    val playerViewModel: PlayerViewModel = hiltViewModel()
+    val searchViewModel: SearchViewViewModel = hiltViewModel()
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination?.route
+
+    Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding(),
+        bottomBar = {
+            // PlayerScreen 에서는 BottomNavigation + MiniPlayer 숨김
+            if (currentDestination != "player") {
+                Column {
+                    MiniPlayer(playerViewModel) {
+
+                    }
+                    BottomNavigationBar(navController)
+                }
+            }
+        }
+    ) { padding ->
+        NavHost(
+            navController = navController,
+            startDestination = "playlist",
+            modifier = Modifier.padding(padding)
+        ) {
+            composable("playlist") {
+                PlaylistScreen(
+//                    onTrackClick = { track, trackList ->
+//                        playerViewModel.play(track, trackList)
+//                        navController.navigate("player")
+//                    }
+                )
+            }
+            composable("search") {
+                SearchScreen(
+                    searchViewModel = searchViewModel,
+                    onTrackClick = { track, trackList ->
+                        playerViewModel.play(track, trackList)
+                        navController.navigate("player")
+                    }
+                )
+            }
+            composable("player") {
+                PlayerScreen(playerViewModel)
+            }
+        }
+    }
+}
+
+@Composable
+fun BottomNavigationBar(navController: NavController) {
+    val items = listOf(
+        BottomNavItem("재생목록", "playlist", Icons.AutoMirrored.Filled.List),
+        BottomNavItem("검색", "search", Icons.Default.Search),
+    )
+
+    NavigationBar {
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentDestination = navBackStackEntry?.destination?.route
+
+        items.forEach { item ->
+            NavigationBarItem(
+                icon = { Icon(item.icon, contentDescription = item.label) },
+                label = { Text(item.label) },
+                selected = currentDestination == item.route,
+                onClick = {
+                    navController.navigate(item.route) {
+                        popUpTo("playlist") { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+    }
+}
+
+data class BottomNavItem(val label: String, val route: String, val icon: ImageVector)

@@ -12,16 +12,15 @@ import javax.inject.Inject
 class SearchPreferencesDataStore @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val Context.dataStore by preferencesDataStore(name = "search_prefs")
     private val SEARCH_KEY = stringSetPreferencesKey("recent_searches")
 
-    val recentSearches: Flow<List<String>> = context.dataStore.data
+    val recentSearches: Flow<List<String>> = context.searchDataStore.data
         .map { prefs ->
             prefs[SEARCH_KEY]?.toList()?.reversed() ?: emptyList()
         }
 
     suspend fun addSearch(keyword: String, maxSize: Int = 10) {
-        context.dataStore.edit { prefs ->
+        context.searchDataStore.edit { prefs ->
             val current = prefs[SEARCH_KEY]?.toMutableSet() ?: mutableSetOf()
             current.remove(keyword)  // 중복 제거
             current.add(keyword)     // 맨 위로 추가

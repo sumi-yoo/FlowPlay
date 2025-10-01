@@ -27,6 +27,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
 import coil.compose.AsyncImage
 import com.sumi.flowplay.data.model.TrackDto
@@ -50,21 +52,21 @@ import androidx.paging.compose.items
 
 @Composable
 fun SearchScreen(
-    viewModel: SearchViewViewModel,
+    searchViewModel: SearchViewViewModel,
     onTrackClick: (TrackDto, List<TrackDto>) -> Unit
 ) {
-    val tracks = viewModel.tracks.collectAsLazyPagingItems()
-    val recentSearches by viewModel.recentSearches.collectAsState()
+    val tracks = searchViewModel.tracks.collectAsLazyPagingItems()
+    val recentSearches by searchViewModel.recentSearches.collectAsState()
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
-    var searchText by remember { mutableStateOf("") }
+    val query by searchViewModel.query.collectAsState()
     var isSearching by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         Column {
             OutlinedTextField(
-                value = searchText,
-                onValueChange = { searchText = it },
+                value = query,
+                onValueChange = { searchViewModel.onTextChanged(it) },
                 label = { Text("검색") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -78,18 +80,18 @@ fun SearchScreen(
                 ),
                 keyboardActions = KeyboardActions(
                     onSearch = {
-                        if (searchText.isNotBlank()) {
-                            viewModel.setQuery(searchText)
+                        if (query.isNotEmpty()) {
+                            searchViewModel.search()
                         }
                         focusManager.clearFocus()
                         isSearching = false
                     }
                 ),
                 trailingIcon = {
-                    if (searchText.isNotEmpty()) {
+                    if (query.isNotEmpty()) {
                         IconButton(
                             onClick = {
-                                searchText = ""
+                                searchViewModel.clearQuery()
                                 if (!isSearching) {
                                     focusRequester.requestFocus()
                                     isSearching = true
@@ -113,8 +115,8 @@ fun SearchScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    searchText = keyword
-                                    viewModel.setQuery(keyword)
+                                    searchViewModel.onTextChanged(keyword)
+                                    searchViewModel.search()
                                     focusManager.clearFocus()
                                     isSearching = false
                                 }

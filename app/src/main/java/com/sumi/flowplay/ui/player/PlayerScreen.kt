@@ -1,4 +1,4 @@
-package com.sumi.flowplay.ui.play
+package com.sumi.flowplay.ui.player
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,94 +22,29 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
 import coil.compose.rememberAsyncImagePainter
-import com.sumi.flowplay.data.model.TrackDto
-import kotlinx.coroutines.delay
 
 @Composable
 fun PlayerScreen(
-    track: TrackDto,
-    trackList: List<TrackDto>,
+    playerViewModel: PlayerViewModel
 ) {
-    val context = LocalContext.current
+    val currentTrack by playerViewModel.currentTrack.collectAsState()
+    val isPlaying by playerViewModel.isPlaying.collectAsState()
+    val currentPosition by playerViewModel.currentPosition.collectAsState()
+    val duration = playerViewModel.exoPlayer.duration.takeIf { it > 0 } ?: 0L
 
-    // 현재 재생 중인 트랙 인덱스 상태
-    var currentIndex by remember { mutableStateOf(trackList.indexOf(track)) }
-
-    // currentIndex 변화에 따라 currentTrack 계산
-    val currentTrack by remember(currentIndex) {
-        derivedStateOf { trackList.getOrNull(currentIndex) ?: trackList.first() }
-    }
-
-    // ExoPlayer 세팅
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build()
-    }
-
-    var isPlaying by remember { mutableStateOf(false) }
-    var currentPosition by remember { mutableStateOf(0L) }
-
-    val duration = exoPlayer.duration.takeIf { it > 0 } ?: 0L
-
-    // currentTrack 변화 시 자동 재생
-    LaunchedEffect(currentTrack) {
-        exoPlayer.stop()
-        exoPlayer.setMediaItem(MediaItem.fromUri(currentTrack.streamUrl))
-        exoPlayer.prepare()
-        exoPlayer.play()
-        isPlaying = true
-    }
-
-    // 화면 나가면 ExoPlayer 정리
-    DisposableEffect(Unit) {
-        onDispose {
-            exoPlayer.stop()
-            exoPlayer.clearMediaItems()
-        }
-    }
-
-    // 재생 상태 업데이트
-    LaunchedEffect(exoPlayer) {
-        while (true) {
-            currentPosition = exoPlayer.currentPosition
-            delay(200)
-        }
-    }
-
-    // 트랙 종료 감지 → 다음곡 자동 재생
-    DisposableEffect(exoPlayer) {
-        val listener = object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_ENDED) {
-                    if (currentIndex < trackList.size - 1) {
-                        currentIndex += 1
-                    }
-                }
-            }
-        }
-        exoPlayer.addListener(listener)
-        onDispose { exoPlayer.removeListener(listener) }
-    }
+    if (currentTrack == null) return
 
     Column(
         modifier = Modifier
@@ -119,20 +54,20 @@ fun PlayerScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)
     ) {
         Image(
-            painter = rememberAsyncImagePainter(currentTrack.artworkUrl),
-            contentDescription = currentTrack.name,
+            painter = rememberAsyncImagePainter(currentTrack!!.artworkUrl),
+            contentDescription = currentTrack!!.name,
             modifier = Modifier
                 .size(250.dp)
                 .clip(RoundedCornerShape(12.dp))
         )
 
-        Text(currentTrack.name, fontWeight = FontWeight.Bold, fontSize = 24.sp)
-        Text(currentTrack.artistName, fontSize = 18.sp, color = Color.Gray)
+        Text(currentTrack!!.name, fontWeight = FontWeight.Bold, fontSize = 24.sp)
+        Text(currentTrack!!.artistName, fontSize = 18.sp, color = Color.Gray)
 
         CustomProgressBar(
             currentPosition = currentPosition,
             duration = duration,
-            onSeek = { pos -> exoPlayer.seekTo(pos) }
+            onSeek = { pos -> playerViewModel.seekTo(pos) }
         )
 
         Row(
@@ -140,7 +75,7 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(formatTime(currentPosition))
-            Text(formatTime(exoPlayer.duration.takeIf { it > 0 } ?: 0L))
+            Text(formatTime(duration))
         }
 
         Row(
@@ -148,37 +83,17 @@ fun PlayerScreen(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            IconButton(
-                onClick = {
-                    currentIndex = if (currentIndex - 1 < 0) trackList.size - 1 else currentIndex - 1
-                }
-            ) {
+            IconButton(onClick = { playerViewModel.skipPrevious() }) {
                 Icon(Icons.Default.SkipPrevious, contentDescription = "Previous", modifier = Modifier.size(48.dp))
             }
-
-            IconButton(
-                onClick = {
-                    if (isPlaying) {
-                        exoPlayer.pause()
-                        isPlaying = false
-                    } else {
-                        exoPlayer.play()
-                        isPlaying = true
-                    }
-                }
-            ) {
+            IconButton(onClick = { playerViewModel.togglePlay() }) {
                 Icon(
                     if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                     contentDescription = "Play/Pause",
                     modifier = Modifier.size(48.dp)
                 )
             }
-
-            IconButton(
-                onClick = {
-                    currentIndex = (currentIndex + 1) % trackList.size
-                }
-            ) {
+            IconButton(onClick = { playerViewModel.skipNext() }) {
                 Icon(Icons.Default.SkipNext, contentDescription = "Next", modifier = Modifier.size(48.dp))
             }
         }
