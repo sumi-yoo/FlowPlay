@@ -66,7 +66,10 @@ fun MainScreen() {
             if (currentDestination != "player") {
                 Column {
                     MiniPlayer(playerViewModel) {
-
+                        // 클릭 시 PlayerScreen으로 전환
+                        navController.navigate("player") {
+                            launchSingleTop = true
+                        }
                     }
                     BottomNavigationBar(navController)
                 }
