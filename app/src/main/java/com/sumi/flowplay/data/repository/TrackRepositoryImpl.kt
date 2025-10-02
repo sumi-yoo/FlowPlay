@@ -16,7 +16,7 @@ class TrackRepositoryImpl @Inject constructor(
 
     override fun searchTracks(query: String): Flow<PagingData<TrackDto>> {
         return Pager(
-            config = PagingConfig(pageSize = 20, prefetchDistance = 5),
+            config = PagingConfig(pageSize = 30, prefetchDistance = 10, initialLoadSize = 60),
             pagingSourceFactory = { JamendoPagingSource(remoteDataSource, query) }
         ).flow
     }

@@ -10,14 +10,12 @@ class JamendoRemoteDataSource @Inject constructor(
     @Named("JamendoClientId") private val clientId: String
 ) {
 
-    suspend fun searchTracks(query: String, page: Int, perPage: Int): JamendoTrackResponse {
-        val offset = (page - 1) * perPage
-
+    suspend fun searchTracks(query: String, offset: Int, limit: Int): JamendoTrackResponse {
         return api.searchTracks(
             clientId = clientId,
             query = query,
             offset = offset,
-            limit = perPage,
+            limit = limit,
             audioFormat = "mp31"
         )
     }

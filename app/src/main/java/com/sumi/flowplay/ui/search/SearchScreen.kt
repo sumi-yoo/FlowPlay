@@ -1,5 +1,6 @@
 package com.sumi.flowplay.ui.search
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,13 +60,19 @@ fun SearchScreen(
     val recentSearches by searchViewModel.recentSearches.collectAsState()
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
-    val query by searchViewModel.query.collectAsState()
+    val text by searchViewModel.text.collectAsState()
     var isSearching by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = isSearching) {
+        // 최근 검색어 화면이면 뒤로가기 시 검색 결과 화면으로 전환
+        isSearching = false
+        focusManager.clearFocus()
+    }
 
     Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         Column {
             OutlinedTextField(
-                value = query,
+                value = text,
                 onValueChange = { searchViewModel.onTextChanged(it) },
                 label = { Text("검색") },
                 modifier = Modifier
@@ -80,7 +87,7 @@ fun SearchScreen(
                 ),
                 keyboardActions = KeyboardActions(
                     onSearch = {
-                        if (query.isNotEmpty()) {
+                        if (text.isNotEmpty()) {
                             searchViewModel.search()
                         }
                         focusManager.clearFocus()
@@ -88,7 +95,7 @@ fun SearchScreen(
                     }
                 ),
                 trailingIcon = {
-                    if (query.isNotEmpty()) {
+                    if (text.isNotEmpty()) {
                         IconButton(
                             onClick = {
                                 searchViewModel.clearQuery()

@@ -8,7 +8,9 @@ import com.sumi.flowplay.data.model.TrackDto
 import com.sumi.flowplay.data.datastore.SearchPreferencesDataStore
 import com.sumi.flowplay.domain.repository.TrackRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,19 +26,19 @@ class SearchViewViewModel @Inject constructor(
     private val searchDataStore: SearchPreferencesDataStore
 ) : ViewModel() {
 
-    private val _query = MutableStateFlow("") // 현재 검색어
-    val query: StateFlow<String> = _query.asStateFlow()
+    // 입력 중인 텍스트 상태
+    private val _text = MutableStateFlow("")
+    val text: StateFlow<String> = _text.asStateFlow()
 
-    val tracks: Flow<PagingData<TrackDto>> = _query.flatMapLatest { query ->
-        repository.searchTracks(query)
-    }.cachedIn(viewModelScope)
+    // 검색 실행 이벤트 (검색 버튼 눌렀을 때만 값 emit)
+    private val _query = MutableSharedFlow<String>(replay = 1)
 
-//    val tracks: StateFlow<PagingData<TrackDto>> = _query
-//        .flatMapLatest { q ->
-//            repository.searchTracks(q)
-//        }
-//        .cachedIn(viewModelScope)
-//        .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val tracks: Flow<PagingData<TrackDto>> = _query
+        .flatMapLatest { query ->
+            repository.searchTracks(query)
+        }
+        .cachedIn(viewModelScope)
 
     val recentSearches: StateFlow<List<String>> =
         searchDataStore.recentSearches.stateIn(
@@ -45,19 +47,24 @@ class SearchViewViewModel @Inject constructor(
             emptyList()
         )
 
+    init {
+        // 초기 화면에서 "" 검색
+        viewModelScope.launch {
+            _query.emit("")
+        }
+    }
+
     fun onTextChanged(newText: String) {
-        _query.value = newText  // TextField 상태 업데이트
+        _text.value = newText
     }
 
     fun search() {
-        if (_query.value.isNotEmpty()) {
-            viewModelScope.launch {
-                searchDataStore.addSearch(_query.value)
-            }
+        viewModelScope.launch {
+            _query.emit(_text.value)
         }
     }
 
     fun clearQuery() {
-        _query.value = ""
+        _text.value = ""
     }
 }
