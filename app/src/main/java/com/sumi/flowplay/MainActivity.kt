@@ -31,6 +31,8 @@ import com.sumi.flowplay.ui.player.MiniPlayer
 import com.sumi.flowplay.ui.player.PlayerScreen
 import com.sumi.flowplay.ui.player.PlayerViewModel
 import com.sumi.flowplay.ui.playlist.PlaylistScreen
+import com.sumi.flowplay.ui.playlist.PlaylistSelectScreen
+import com.sumi.flowplay.ui.playlist.PlaylistViewModel
 import com.sumi.flowplay.ui.search.SearchScreen
 import com.sumi.flowplay.ui.search.SearchViewViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -53,6 +55,7 @@ fun MainScreen() {
     val navController = rememberNavController()
     val playerViewModel: PlayerViewModel = hiltViewModel()
     val searchViewModel: SearchViewViewModel = hiltViewModel()
+    val playlistViewModel: PlaylistViewModel = hiltViewModel()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination?.route
@@ -63,7 +66,7 @@ fun MainScreen() {
             .systemBarsPadding(),
         bottomBar = {
             // PlayerScreen 에서는 BottomNavigation + MiniPlayer 숨김
-            if (currentDestination != "player") {
+            if (currentDestination != "player" && currentDestination != "playlist_select") {
                 Column {
                     MiniPlayer(playerViewModel) {
                         // 클릭 시 PlayerScreen으로 전환
@@ -99,7 +102,17 @@ fun MainScreen() {
                 )
             }
             composable("player") {
-                PlayerScreen(playerViewModel)
+                PlayerScreen(
+                    playerViewModel = playerViewModel,
+                    onAddToPlaylist = { navController.navigate("playlist_select") }
+                )
+            }
+            composable("playlist_select") {
+                PlaylistSelectScreen(
+                    playlistViewModel = playlistViewModel,
+                    playerViewModel = playerViewModel,
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }

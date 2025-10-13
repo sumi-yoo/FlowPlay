@@ -1,0 +1,39 @@
+package com.sumi.flowplay.data.db
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface PlaylistDao {
+
+    @Transaction
+    @Query("SELECT * FROM playlists")
+    fun getAllPlaylists(): Flow<List<PlaylistWithTracks>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPlaylist(playlist: PlaylistEntity)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertTrack(track: TrackEntity)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertPlaylistTrackCrossRef(ref: PlaylistTrackCrossRef)
+
+    @Transaction
+    suspend fun insertTrackToPlaylist(track: TrackEntity, playlistId: Long) {
+        // 1. 트랙 먼저 insert
+        insertTrack(track)
+
+        // 2. 그 다음 CrossRef insert
+        insertPlaylistTrackCrossRef(
+            PlaylistTrackCrossRef(
+                playlistId = playlistId,
+                trackId = track.id
+            )
+        )
+    }
+}

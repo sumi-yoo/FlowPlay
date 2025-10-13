@@ -60,6 +60,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
+    // icons
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     // Gson 컨버터 (JSON 자동 파싱용)
@@ -82,7 +84,10 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.50")
     kapt("com.google.dagger:hilt-android-compiler:2.50")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
-    implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    // room
+    implementation("androidx.room:room-runtime:2.7.0-alpha07")
+    implementation("androidx.room:room-ktx:2.7.0-alpha07")
+    kapt("androidx.room:room-compiler:2.7.0-alpha07")
 }
 
 kapt {

@@ -28,7 +28,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,17 +43,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
 import coil.compose.AsyncImage
-import com.sumi.flowplay.data.model.TrackDto
+import com.sumi.flowplay.data.model.Track
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 
 @Composable
 fun SearchScreen(
     searchViewModel: SearchViewViewModel,
-    onTrackClick: (TrackDto, List<TrackDto>) -> Unit
+    onTrackClick: (Track, List<Track>) -> Unit
 ) {
     val tracks = searchViewModel.tracks.collectAsLazyPagingItems()
     val recentSearches by searchViewModel.recentSearches.collectAsState()
@@ -161,7 +159,7 @@ fun SearchScreen(
 }
 
 @Composable
-fun TrackItem(track: TrackDto?, onClick: () -> Unit) {
+fun TrackItem(track: Track?, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

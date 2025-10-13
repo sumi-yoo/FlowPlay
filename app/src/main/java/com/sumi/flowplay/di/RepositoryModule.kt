@@ -1,6 +1,8 @@
 package com.sumi.flowplay.di
 
+import com.sumi.flowplay.data.repository.PlaylistRepositoryImpl
 import com.sumi.flowplay.data.repository.TrackRepositoryImpl
+import com.sumi.flowplay.domain.repository.PlaylistRepository
 import com.sumi.flowplay.domain.repository.TrackRepository
 import dagger.Binds
 import dagger.Module
@@ -14,4 +16,9 @@ abstract class RepositoryModule {
     abstract fun bindTrackRepository(
         impl: TrackRepositoryImpl
     ): TrackRepository
+
+    @Binds
+    abstract fun bindPlaylistRepository(
+        impl: PlaylistRepositoryImpl
+    ): PlaylistRepository
 }

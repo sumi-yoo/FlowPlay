@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.sumi.flowplay.data.model.TrackDto
+import com.sumi.flowplay.data.model.Track
 import com.sumi.flowplay.data.datastore.SearchPreferencesDataStore
 import com.sumi.flowplay.domain.repository.TrackRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +34,7 @@ class SearchViewViewModel @Inject constructor(
     private val _query = MutableSharedFlow<String>(replay = 1)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val tracks: Flow<PagingData<TrackDto>> = _query
+    val tracks: Flow<PagingData<Track>> = _query
         .flatMapLatest { query ->
             repository.searchTracks(query)
         }
@@ -61,6 +61,7 @@ class SearchViewViewModel @Inject constructor(
     fun search() {
         viewModelScope.launch {
             _query.emit(_text.value)
+            searchDataStore.addSearch(_text.value)
         }
     }
 

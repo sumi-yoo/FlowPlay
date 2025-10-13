@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import com.sumi.flowplay.data.model.TrackDto
+import com.sumi.flowplay.data.model.Track
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -23,13 +23,13 @@ class PlayerViewModel @Inject constructor(
     val exoPlayer: ExoPlayer
 ) : ViewModel() {
 
-    private val _trackList = MutableStateFlow<List<TrackDto>>(emptyList())
-    val trackList: StateFlow<List<TrackDto>> = _trackList.asStateFlow()
+    private val _trackList = MutableStateFlow<List<Track>>(emptyList())
+    val trackList: StateFlow<List<Track>> = _trackList.asStateFlow()
 
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
 
-    val currentTrack: StateFlow<TrackDto?> = _currentIndex.map { idx ->
+    val currentTrack: StateFlow<Track?> = _currentIndex.map { idx ->
         _trackList.value.getOrNull(idx)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
@@ -62,7 +62,7 @@ class PlayerViewModel @Inject constructor(
         exoPlayer.addListener(listener)
     }
 
-    fun play(track: TrackDto, tracks: List<TrackDto>) {
+    fun play(track: Track, tracks: List<Track>) {
         _trackList.value = tracks
         _currentIndex.value = tracks.indexOf(track).takeIf { it >= 0 } ?: 0
         playCurrent()

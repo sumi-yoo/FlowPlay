@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
@@ -37,7 +39,8 @@ import coil.compose.rememberAsyncImagePainter
 
 @Composable
 fun PlayerScreen(
-    playerViewModel: PlayerViewModel
+    playerViewModel: PlayerViewModel,
+    onAddToPlaylist: () -> Unit
 ) {
     val currentTrack by playerViewModel.currentTrack.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
@@ -95,6 +98,25 @@ fun PlayerScreen(
             }
             IconButton(onClick = { playerViewModel.skipNext() }) {
                 Icon(Icons.Default.SkipNext, contentDescription = "Next", modifier = Modifier.size(48.dp))
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            IconButton(
+                onClick = {
+                    // Playlist 선택 화면으로 이동
+                    onAddToPlaylist()
+                },
+                modifier = Modifier.align(Alignment.CenterEnd).padding(0.dp)
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.QueueMusic,
+                    contentDescription = "Add to Playlist",
+                    modifier = Modifier.size(28.dp)
+                )
             }
         }
     }
