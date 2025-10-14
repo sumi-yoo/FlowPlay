@@ -56,7 +56,7 @@ fun MiniPlayer(
                     Text(currentTrack!!.name, maxLines = 1)
                     Text(currentTrack!!.artistName, maxLines = 1)
                 }
-                IconButton(onClick = { viewModel.togglePlay() }) {
+                IconButton(onClick = { viewModel.togglePlayPause() }) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = null

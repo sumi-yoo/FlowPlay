@@ -83,6 +83,7 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.50")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    implementation("androidx.media:media:1.6.0")
 }
 
 kapt {

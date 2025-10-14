@@ -1,9 +1,16 @@
 package com.sumi.flowplay
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
+import android.os.IBinder
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,11 +29,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.sumi.flowplay.service.MusicPlayerService
 import com.sumi.flowplay.ui.player.MiniPlayer
 import com.sumi.flowplay.ui.player.PlayerScreen
 import com.sumi.flowplay.ui.player.PlayerViewModel
@@ -34,24 +43,79 @@ import com.sumi.flowplay.ui.playlist.PlaylistScreen
 import com.sumi.flowplay.ui.search.SearchScreen
 import com.sumi.flowplay.ui.search.SearchViewViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private var musicService: MusicPlayerService? = null
+    private var isBound = false
+
+    private val playerViewModel: PlayerViewModel by viewModels()
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+            val binder = binder as MusicPlayerService.LocalBinder
+            musicService = binder.getService()
+            isBound = true
+            musicService?.let { playerViewModel.bindService(it) }
+            observePlayerCommands()
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            isBound = false
+            musicService = null
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
-                MainScreen()
+                MainScreen(playerViewModel)
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Intent(this, MusicPlayerService::class.java).also { intent ->
+            startService(intent) // 포그라운드 재생 유지
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (isBound) {
+            unbindService(serviceConnection)
+            isBound = false
+        }
+    }
+
+    private fun observePlayerCommands() {
+        Log.d("테스트", "observePlayerCommands")
+        lifecycleScope.launch {
+            playerViewModel.playerCommand.collect { command ->
+                Log.d("테스트", "command $command")
+                musicService?.let { service ->
+                    when (command) {
+                        is PlayerViewModel.PlayerCommand.Play -> service.play(command.track, command.tracks)
+                        PlayerViewModel.PlayerCommand.TogglePlay -> service.togglePlayPause()
+                        PlayerViewModel.PlayerCommand.SkipNext -> service.skipNext()
+                        PlayerViewModel.PlayerCommand.SkipPrevious -> service.skipPrevious()
+                        is PlayerViewModel.PlayerCommand.Seek -> service.seekTo(command.position)
+                    }
+                } ?: Log.d("테스트", "Service not bound yet")
             }
         }
     }
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(playerViewModel: PlayerViewModel) {
     val navController = rememberNavController()
-    val playerViewModel: PlayerViewModel = hiltViewModel()
     val searchViewModel: SearchViewViewModel = hiltViewModel()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
