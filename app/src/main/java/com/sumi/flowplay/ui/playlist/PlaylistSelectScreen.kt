@@ -80,8 +80,16 @@ fun PlaylistSelectScreen(
                 actions = {
                     TextButton(onClick = {
                         currentTrack?.let { track ->
-                            selectedPlaylists.filter { it.value }.keys.forEach { playlistId ->
+                            val (selected, unselected) = selectedPlaylists.entries.partition { it.value }
+
+                            // 체크된 플레이리스트 → 추가
+                            selected.forEach { (playlistId, _) ->
                                 playlistViewModel.addTrackToPlaylist(playlistId, track)
+                            }
+
+                            // 체크 해제된 플레이리스트 → 삭제
+                            unselected.forEach { (playlistId, _) ->
+                                playlistViewModel.deleteTrackFromPlaylist(playlistId, track)
                             }
                         }
                         onBack()

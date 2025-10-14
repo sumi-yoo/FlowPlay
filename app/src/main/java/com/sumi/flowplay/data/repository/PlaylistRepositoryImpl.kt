@@ -58,4 +58,12 @@ class PlaylistRepositoryImpl @Inject constructor(
         )
         dao.insertTrackToPlaylist(trackEntity, playlistId)
     }
+
+    override suspend fun deleteTrackFromPlaylist(playlistId: Long, track: Track) {
+        dao.deleteTrackFromPlaylist(playlistId, track.id)
+    }
+
+    override suspend fun deletePlaylist(playlistId: Long) {
+        dao.deletePlaylist(playlistId)
+    }
 }

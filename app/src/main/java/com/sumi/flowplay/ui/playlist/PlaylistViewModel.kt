@@ -31,8 +31,15 @@ class PlaylistViewModel @Inject constructor(
     }
 
     fun addPlaylist(name: String) {
+        val playlistId = name.hashCode().toLong()
         viewModelScope.launch {
-            repository.addPlaylist(Playlist(name = name))
+            repository.addPlaylist(Playlist(id = playlistId, name = name))
+        }
+    }
+
+    fun deleteTrackFromPlaylist(playlistId: Long, track: Track) {
+        viewModelScope.launch {
+            repository.deleteTrackFromPlaylist(playlistId, track)
         }
     }
 }
