@@ -112,7 +112,9 @@ fun MainScreen() {
             composable("player") {
                 PlayerScreen(
                     playerViewModel = playerViewModel,
-                    onAddToPlaylist = { navController.navigate("playlistSelect") }
+                    playlistViewModel = playlistViewModel,
+                    onAddToPlaylist = { navController.navigate("playlistSelect") },
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable("playlistSelect") {

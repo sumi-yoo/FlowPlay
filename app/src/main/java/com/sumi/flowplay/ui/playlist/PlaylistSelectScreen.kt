@@ -2,6 +2,7 @@ package com.sumi.flowplay.ui.playlist
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -146,9 +147,20 @@ fun PlaylistSelectScreen(
                                 modifier = Modifier.size(32.dp)
                             )
                             Spacer(Modifier.width(12.dp))
-                            Text(playlist.name, style = MaterialTheme.typography.bodyLarge)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = playlist.name,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = stringResource(R.string.playlist_track_count, playlist.tracks.size),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                             Spacer(modifier = Modifier.weight(1f))
                             Checkbox(
+                                modifier = Modifier.padding(5.dp).size(20.dp),
                                 checked = checked,
                                 onCheckedChange = { selectedPlaylists[playlist.id] = it }
                             )

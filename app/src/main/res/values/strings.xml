@@ -3,8 +3,10 @@
     <string name="playlist_add_title">플레이리스트에 추가</string>
     <string name="back">뒤로가기</string>
     <string name="complete">완료</string>
+    <string name="delete">삭제</string>
+    <string name="add">추가</string>
     <string name="no_playlists">아직 플레이리스트가 없습니다.</string>
-    <string name="select_playlist">플레이리스트를 선택하세요</string>
+    <string name="select_playlist">플레이리스트를 선택하세요.</string>
     <string name="create_new_playlist">+ 새 플레이리스트 만들기</string>
     <string name="new_playlist_dialog_title">새 플레이리스트 생성</string>
     <string name="playlist_name_label">플레이리스트 이름</string>
@@ -12,9 +14,10 @@
     <string name="cancel">취소</string>
     <string name="playlist_title">플레이리스트</string>
     <string name="playlist_track_count">%1$d곡</string>
-    <string name="playlist_not_found">플레이리스트를 찾을 수 없습니다</string>
-    <string name="delete_playlist">플레이리스트 삭제</string>
+    <string name="playlist_not_found">플레이리스트를 찾을 수 없습니다.</string>
     <string name="remove_track">트랙 제거</string>
-    <string name="no_tracks_in_playlist">플레이리스트에 곡이 없습니다</string>
+    <string name="no_tracks_in_playlist">플레이리스트에 곡이 없습니다.</string>
     <string name="search_title">검색</string>
+    <string name="favorites_playlist_name">❤ 좋아요</string>
+    <string name="playlist_name_exists">이미 존재하는 이름입니다.</string>
 </resources>

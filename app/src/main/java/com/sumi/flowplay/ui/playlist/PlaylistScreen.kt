@@ -1,5 +1,6 @@
 package com.sumi.flowplay.ui.playlist
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -16,10 +18,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,13 +37,18 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.sumi.flowplay.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,16 +58,58 @@ fun PlaylistScreen(
     onPlaylistClick: (Long) -> Unit
 ) {
     val playlists by playlistViewModel.playlists.collectAsState()
+    val isDeleteMode by playlistViewModel.isDeleteMode.collectAsState()
+
     var showCreateDialog by remember { mutableStateOf(false) }
     var newPlaylistName by remember { mutableStateOf("") }
+    val selectedPlaylists = remember { mutableStateMapOf<Long, Boolean>() }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(modifier = Modifier.padding(4.dp), text = stringResource(R.string.playlist_title)) },
+                title = { Text(stringResource(R.string.playlist_title)) },
                 actions = {
-                    IconButton(onClick = { showCreateDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_new_playlist))
+                    if (isDeleteMode) {
+                        TextButton(onClick = {
+                            val idsToDelete = selectedPlaylists.filterValues { it }.keys
+                            playlistViewModel.deletePlaylists(idsToDelete.toList())
+                            selectedPlaylists.clear()
+                            playlistViewModel.toggleDeleteMode()
+                        }) {
+                            Text(stringResource(R.string.complete))
+                        }
+                    } else {
+                        var expanded by remember { mutableStateOf(false) }
+
+                        Box {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "더보기"
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false },
+                                offset = DpOffset(x = (-5).dp, y = 0.dp) // 왼쪽으로 5dp 이동
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.add)) },
+                                    onClick = {
+                                        expanded = false
+                                        showCreateDialog = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.delete)) },
+                                    onClick = {
+                                        expanded = false
+                                        playlistViewModel.toggleDeleteMode()
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             )
@@ -71,8 +123,7 @@ fun PlaylistScreen(
         ) {
             if (playlists.isEmpty()) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -83,11 +134,14 @@ fun PlaylistScreen(
             } else {
                 LazyColumn {
                     items(playlists) { playlist ->
+                        val checked = selectedPlaylists[playlist.id] ?: false
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 6.dp)
-                                .clickable { onPlaylistClick(playlist.id) },
+                                .clickable(enabled = !isDeleteMode) {
+                                    if (!isDeleteMode) onPlaylistClick(playlist.id)
+                                },
                             shape = RoundedCornerShape(12.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
@@ -97,12 +151,19 @@ fun PlaylistScreen(
                                     .fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // 썸네일 아이콘 (기본)
-                                Icon(
-                                    Icons.AutoMirrored.Filled.QueueMusic,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(40.dp)
-                                )
+                                if (playlist.tracks.isEmpty()) {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.QueueMusic,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(40.dp)
+                                    )
+                                } else {
+                                    AsyncImage(
+                                        model = playlist.tracks.first().artworkUrl,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(40.dp).clip(RoundedCornerShape(4.dp))
+                                    )
+                                }
 
                                 Spacer(Modifier.width(12.dp))
 
@@ -112,16 +173,29 @@ fun PlaylistScreen(
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        text = stringResource(R.string.playlist_track_count, playlist.tracks.size),
+                                        text = stringResource(
+                                            R.string.playlist_track_count,
+                                            playlist.tracks.size
+                                        ),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
 
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = null
-                                )
+                                if (isDeleteMode && playlist.id != -1L) {
+                                    Checkbox(
+                                        modifier = Modifier.padding(5.dp).size(20.dp),
+                                        checked = checked,
+                                        onCheckedChange = {
+                                            selectedPlaylists[playlist.id] = it
+                                        }
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                        contentDescription = null
+                                    )
+                                }
                             }
                         }
                     }
@@ -132,23 +206,41 @@ fun PlaylistScreen(
 
     // 새 플레이리스트 생성 다이얼로그
     if (showCreateDialog) {
+        var showError by remember { mutableStateOf(false) }
+
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
             title = { Text(stringResource(R.string.new_playlist_dialog_title)) },
             text = {
-                TextField(
-                    value = newPlaylistName,
-                    onValueChange = { newPlaylistName = it },
-                    label = { Text(stringResource(R.string.playlist_name_label)) },
-                    singleLine = true
-                )
+                Column {
+                    TextField(
+                        value = newPlaylistName,
+                        onValueChange = {
+                            newPlaylistName = it
+                            showError = false
+                        },
+                        label = { Text(stringResource(R.string.playlist_name_label)) },
+                        singleLine = true
+                    )
+                    if (showError) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.playlist_name_exists), // "이미 존재하는 이름입니다" 같은 문자열
+                            color = Color.Red,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
             },
             confirmButton = {
+                val existing = playlists.any { it.name == newPlaylistName }
                 TextButton(onClick = {
-                    if (newPlaylistName.isNotBlank()) {
+                    if (newPlaylistName.isNotBlank() && !existing) {
                         playlistViewModel.addPlaylist(newPlaylistName)
                         newPlaylistName = ""
                         showCreateDialog = false
+                    } else {
+                        showError = true
                     }
                 }) {
                     Text(stringResource(R.string.create))

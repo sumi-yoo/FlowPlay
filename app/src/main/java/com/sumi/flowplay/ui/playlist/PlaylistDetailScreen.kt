@@ -93,12 +93,8 @@ fun PlaylistDetailScreen(
                             Text(stringResource(R.string.complete))
                         }
                     } else {
-                        IconButton(onClick = { selectionMode = true }) {
-                            Icon(
-                                modifier = Modifier.size(20.dp),
-                                imageVector = Icons.Default.Delete
-                                , contentDescription = stringResource(R.string.delete_playlist)
-                            )
+                        TextButton(onClick = { selectionMode = true }) {
+                            Text(stringResource(R.string.delete))
                         }
                     }
                 }

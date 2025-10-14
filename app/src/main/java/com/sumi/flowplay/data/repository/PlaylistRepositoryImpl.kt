@@ -16,8 +16,8 @@ class PlaylistRepositoryImpl @Inject constructor(
 ) : PlaylistRepository {
 
     // 플레이리스트 조회
-    override fun getAllPlaylists(): Flow<List<Playlist>> =
-        dao.getAllPlaylists().map { list ->
+    override fun getAllPlaylists(favoritesId: Long): Flow<List<Playlist>> =
+        dao.getAllPlaylists(favoritesId).map { list ->
             list.map { pl ->
                 Playlist(
                     id = pl.playlist.id,
@@ -83,7 +83,7 @@ class PlaylistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deletePlaylist(playlistId: Long) {
-        dao.deletePlaylist(playlistId)
+        dao.deletePlaylistSafe(playlistId)
     }
 
     override fun getTracksOfPlaylist(playlistId: Long): Flow<List<Track>> {

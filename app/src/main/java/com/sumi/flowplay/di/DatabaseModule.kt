@@ -2,6 +2,9 @@ package com.sumi.flowplay.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.sumi.flowplay.R
 import com.sumi.flowplay.data.db.AppDatabase
 import com.sumi.flowplay.data.db.PlaylistDao
 import dagger.Module
@@ -22,12 +25,19 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "app_database"
-        ).build()
+        )
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    super.onCreate(db)
+                    val name = context.getString(R.string.favorites_playlist_name)
+                    val id = name.hashCode().toLong()
+                    // DB가 처음 생성될 때 딱 한 번 실행됨
+                    db.execSQL("INSERT INTO playlists (id, name) VALUES ($id, '$name')")
+                }
+            })
+            .build()
     }
 
     @Provides
     fun providePlaylistDao(db: AppDatabase): PlaylistDao = db.playlistDao()
-
-//    @Provides
-//    fun provideTrackDao(db: AppDatabase): TrackDao = db.trackDao()
 }

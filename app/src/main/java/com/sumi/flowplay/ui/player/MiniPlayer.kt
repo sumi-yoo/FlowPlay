@@ -21,6 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 
@@ -49,7 +50,7 @@ fun MiniPlayer(
                 AsyncImage(
                     model = currentTrack!!.artworkUrl,
                     contentDescription = null,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(4.dp))
                 )
                 Spacer(Modifier.width(8.dp))
                 Column(Modifier.weight(1f)) {
