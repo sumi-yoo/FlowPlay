@@ -14,6 +14,10 @@ interface PlaylistDao {
     @Query("SELECT * FROM playlists")
     fun getAllPlaylists(): Flow<List<PlaylistWithTracks>>
 
+    @Transaction
+    @Query("SELECT * FROM playlists WHERE id = :playlistId")
+    fun getPlaylistById(playlistId: Long): Flow<PlaylistWithTracks>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlaylist(playlist: PlaylistEntity)
 
@@ -42,4 +46,12 @@ interface PlaylistDao {
 
     @Query("DELETE FROM playlists WHERE id = :playlistId")
     suspend fun deletePlaylist(playlistId: Long)
+
+    @Transaction
+    @Query("""
+        SELECT t.* FROM tracks t
+        INNER JOIN playlist_track_cross_ref r ON t.id = r.trackId
+        WHERE r.playlistId = :playlistId
+    """)
+    fun getTracksOfPlaylist(playlistId: Long): Flow<List<TrackEntity>>
 }

@@ -1,7 +1,7 @@
 package com.sumi.flowplay.ui.playlist
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -100,68 +100,72 @@ fun PlaylistSelectScreen(
             )
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (playlists.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.no_playlists),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+                item {
+                    Text(
+                        text = stringResource(R.string.no_playlists),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
             } else {
-                Text(stringResource(R.string.select_playlist), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(12.dp))
-                LazyColumn {
-                    items(playlists) { playlist ->
-                        val checked = selectedPlaylists[playlist.id] ?: false
-                        Card(
+                item {
+                    Text(
+                        stringResource(R.string.select_playlist),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
+
+                items(playlists) { playlist ->
+                    val checked = selectedPlaylists[playlist.id] ?: false
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                selectedPlaylists[playlist.id] = !(selectedPlaylists[playlist.id] ?: false)
+                            },
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .clickable {
-                                    selectedPlaylists[playlist.id] = !(selectedPlaylists[playlist.id] ?: false)
-                                },
-                            shape = RoundedCornerShape(12.dp)
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.QueueMusic,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                                Spacer(Modifier.width(12.dp))
-                                Text(
-                                    playlist.name,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Spacer(modifier = Modifier.weight(1f))
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = {
-                                        selectedPlaylists[playlist.id] = it
-                                    }
-                                )
-                            }
+                            Icon(
+                                Icons.AutoMirrored.Filled.QueueMusic,
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(playlist.name, style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Checkbox(
+                                checked = checked,
+                                onCheckedChange = { selectedPlaylists[playlist.id] = it }
+                            )
                         }
                     }
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
-            Button(
-                onClick = { showCreateDialog = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.create_new_playlist))
+            // 새 플레이리스트 버튼
+            item {
+                Spacer(Modifier.height(20.dp))
+                Button(
+                    onClick = { showCreateDialog = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.create_new_playlist))
+                }
             }
         }
     }

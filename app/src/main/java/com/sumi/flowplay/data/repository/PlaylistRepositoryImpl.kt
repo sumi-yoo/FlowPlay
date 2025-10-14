@@ -18,11 +18,11 @@ class PlaylistRepositoryImpl @Inject constructor(
     // 플레이리스트 조회
     override fun getAllPlaylists(): Flow<List<Playlist>> =
         dao.getAllPlaylists().map { list ->
-            list.map { pw ->
+            list.map { pl ->
                 Playlist(
-                    id = pw.playlist.id,
-                    name = pw.playlist.name,
-                    tracks = pw.tracks.map { t ->
+                    id = pl.playlist.id,
+                    name = pl.playlist.name,
+                    tracks = pl.tracks.map { t ->
                         Track(
                             id = t.id,
                             name = t.name,
@@ -35,6 +35,25 @@ class PlaylistRepositoryImpl @Inject constructor(
                 )
             }
         }
+
+    override fun getPlaylistById(playlistId: Long): Flow<Playlist> {
+        return dao.getPlaylistById(playlistId).map { pl ->
+            Playlist(
+                id = pl.playlist.id,
+                name = pl.playlist.name,
+                tracks = pl.tracks.map { t ->
+                    Track(
+                        id = t.id,
+                        name = t.name,
+                        artistName = t.artistName,
+                        albumName = t.albumName,
+                        artworkUrl = t.artworkUrl,
+                        streamUrl = t.streamUrl
+                    )
+                }
+            )
+        }
+    }
 
     // 플레이리스트 추가
     override suspend fun addPlaylist(playlist: Playlist) {
@@ -65,5 +84,20 @@ class PlaylistRepositoryImpl @Inject constructor(
 
     override suspend fun deletePlaylist(playlistId: Long) {
         dao.deletePlaylist(playlistId)
+    }
+
+    override fun getTracksOfPlaylist(playlistId: Long): Flow<List<Track>> {
+        return dao.getTracksOfPlaylist(playlistId).map { entities ->
+            entities.map { track ->
+                Track(
+                    id = track.id,
+                    name = track.name,
+                    artistName = track.artistName,
+                    albumName = track.albumName,
+                    artworkUrl = track.artworkUrl,
+                    streamUrl = track.streamUrl
+                )
+            }
+        }
     }
 }

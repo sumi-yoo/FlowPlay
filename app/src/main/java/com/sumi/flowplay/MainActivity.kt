@@ -18,18 +18,23 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.sumi.flowplay.ui.player.MiniPlayer
 import com.sumi.flowplay.ui.player.PlayerScreen
 import com.sumi.flowplay.ui.player.PlayerViewModel
+import com.sumi.flowplay.ui.playlist.PlaylistDetailScreen
 import com.sumi.flowplay.ui.playlist.PlaylistScreen
 import com.sumi.flowplay.ui.playlist.PlaylistSelectScreen
 import com.sumi.flowplay.ui.playlist.PlaylistViewModel
@@ -65,8 +70,8 @@ fun MainScreen() {
             .fillMaxSize()
             .systemBarsPadding(),
         bottomBar = {
-            // PlayerScreen 에서는 BottomNavigation + MiniPlayer 숨김
-            if (currentDestination != "player" && currentDestination != "playlist_select") {
+            // BottomNavigation + MiniPlayer 숨김
+            if (currentDestination != "player" && currentDestination != "playlistSelect") {
                 Column {
                     MiniPlayer(playerViewModel) {
                         // 클릭 시 PlayerScreen으로 전환
@@ -74,7 +79,9 @@ fun MainScreen() {
                             launchSingleTop = true
                         }
                     }
-                    BottomNavigationBar(navController)
+                    if (currentDestination != "playlistDetail/{playlistId}") {
+                        BottomNavigationBar(navController)
+                    }
                 }
             }
         }
@@ -86,15 +93,16 @@ fun MainScreen() {
         ) {
             composable("playlist") {
                 PlaylistScreen(
-//                    onTrackClick = { track, trackList ->
-//                        playerViewModel.play(track, trackList)
-//                        navController.navigate("player")
-//                    }
+                    playlistViewModel = playlistViewModel,
+                    onPlaylistClick = { playlistId ->
+                        navController.navigate("playlistDetail/$playlistId")
+                    }
                 )
             }
             composable("search") {
                 SearchScreen(
                     searchViewModel = searchViewModel,
+                    playerViewModel = playerViewModel,
                     onTrackClick = { track, trackList ->
                         playerViewModel.play(track, trackList)
                         navController.navigate("player")
@@ -104,14 +112,37 @@ fun MainScreen() {
             composable("player") {
                 PlayerScreen(
                     playerViewModel = playerViewModel,
-                    onAddToPlaylist = { navController.navigate("playlist_select") }
+                    onAddToPlaylist = { navController.navigate("playlistSelect") }
                 )
             }
-            composable("playlist_select") {
+            composable("playlistSelect") {
                 PlaylistSelectScreen(
                     playlistViewModel = playlistViewModel,
                     playerViewModel = playerViewModel,
                     onBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                "playlistDetail/{playlistId}",
+                arguments = listOf(navArgument("playlistId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val playlistId = backStackEntry.arguments?.getLong("playlistId") ?: 0L
+
+                LaunchedEffect(playlistId) {
+                    playlistViewModel.selectPlaylistById(playlistId)
+                }
+
+                PlaylistDetailScreen(
+                    playlistId = playlistId,
+                    playlistViewModel = playlistViewModel,
+                    playerViewModel = playerViewModel,
+                    onTrackClick = { track, trackList ->
+                        playerViewModel.play(track, trackList)
+                        navController.navigate("player")
+                    },
+                    onBack = {
+                        navController.popBackStack()
+                    }
                 )
             }
         }
@@ -121,8 +152,8 @@ fun MainScreen() {
 @Composable
 fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
-        BottomNavItem("재생목록", "playlist", Icons.AutoMirrored.Filled.List),
-        BottomNavItem("검색", "search", Icons.Default.Search),
+        BottomNavItem(stringResource(R.string.playlist_title), "playlist", Icons.AutoMirrored.Filled.List),
+        BottomNavItem(stringResource(R.string.search_title), "search", Icons.Default.Search),
     )
 
     NavigationBar {

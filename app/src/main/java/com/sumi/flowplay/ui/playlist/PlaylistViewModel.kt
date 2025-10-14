@@ -6,6 +6,8 @@ import com.sumi.flowplay.data.model.Playlist
 import com.sumi.flowplay.data.model.Track
 import com.sumi.flowplay.domain.repository.PlaylistRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,6 +21,20 @@ class PlaylistViewModel @Inject constructor(
 
     val playlists: StateFlow<List<Playlist>> =
         repository.getAllPlaylists().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** 선택된 플레이리스트 */
+    private val _selectedPlaylist = MutableStateFlow<Playlist?>(null)
+    val selectedPlaylist: StateFlow<Playlist?> = _selectedPlaylist
+
+
+    fun selectPlaylistById(playlistId: Long) {
+        viewModelScope.launch {
+            repository.getPlaylistById(playlistId)
+                .collect { playlist ->
+                    _selectedPlaylist.value = playlist
+                }
+        }
+    }
 
     fun isTrackInPlaylist(playlistId: Long, trackId: Long): Boolean {
         return playlists.value.firstOrNull { it.id == playlistId }?.tracks?.any { it.id == trackId } == true
@@ -41,5 +57,9 @@ class PlaylistViewModel @Inject constructor(
         viewModelScope.launch {
             repository.deleteTrackFromPlaylist(playlistId, track)
         }
+    }
+
+    fun getTracksOfPlaylist(playlistId: Long): Flow<List<Track>> {
+        return repository.getTracksOfPlaylist(playlistId)
     }
 }

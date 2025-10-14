@@ -1,6 +1,7 @@
 package com.sumi.flowplay.ui.search
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -35,9 +37,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -48,14 +52,19 @@ import coil.compose.AsyncImage
 import com.sumi.flowplay.data.model.Track
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
+import com.sumi.flowplay.ui.player.PlayerViewModel
+import com.sumi.flowplay.ui.player.PlayingWave
 
 @Composable
 fun SearchScreen(
     searchViewModel: SearchViewViewModel,
+    playerViewModel: PlayerViewModel,
     onTrackClick: (Track, List<Track>) -> Unit
 ) {
     val tracks = searchViewModel.tracks.collectAsLazyPagingItems()
     val recentSearches by searchViewModel.recentSearches.collectAsState()
+    val currentTrack by playerViewModel.currentTrack.collectAsState()
+    val isPlaying by playerViewModel.isPlaying.collectAsState()
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     val text by searchViewModel.text.collectAsState()
@@ -141,7 +150,7 @@ fun SearchScreen(
                 ) {
                     items(tracks) { track ->
                         track?.let {
-                            TrackItem(track = it) {
+                            TrackItem(track = it, isCurrentTrack = currentTrack?.id == track.id, isPlaying = isPlaying) {
                                 val currentTrackList = (0 until tracks.itemCount)
                                     .mapNotNull { index -> tracks.peek(index) }
                                 onTrackClick(it, currentTrackList)
@@ -159,7 +168,7 @@ fun SearchScreen(
 }
 
 @Composable
-fun TrackItem(track: Track?, onClick: () -> Unit) {
+fun TrackItem(track: Track?, isCurrentTrack: Boolean, isPlaying: Boolean,onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -167,11 +176,31 @@ fun TrackItem(track: Track?, onClick: () -> Unit) {
             .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage(
-            model = track?.artworkUrl,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp)
-        )
+        Box(modifier = Modifier.size(64.dp)) {
+            AsyncImage(
+                model = track?.artworkUrl,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(4.dp))
+            )
+
+            if (isCurrentTrack) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color.Black.copy(alpha = 0.6f))
+                )
+                // 재생중 표시
+                PlayingWave(
+                    isPlaying = isPlaying,
+                    barCount = 5,
+                    barWidth = 3.dp,
+                    barMaxHeight = 24.dp,
+                    barMinHeight = 6.dp,
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Column(
             modifier = Modifier.fillMaxHeight(),
