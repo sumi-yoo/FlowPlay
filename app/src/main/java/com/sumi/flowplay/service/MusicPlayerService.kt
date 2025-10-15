@@ -17,7 +17,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerNotificationManager
 import coil.ImageLoader
 import coil.request.ImageRequest
 import com.sumi.flowplay.MainActivity
@@ -50,7 +49,6 @@ class MusicPlayerService : Service() {
     private val binder = LocalBinder()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    private lateinit var playerNotificationManager: PlayerNotificationManager
     private lateinit var mediaSession: MediaSessionCompat
 
     private val exoPlayer: ExoPlayer by lazy {
@@ -274,7 +272,6 @@ class MusicPlayerService : Service() {
 
     override fun onDestroy() {
         positionUpdateJob?.cancel()
-        playerNotificationManager.setPlayer(null)
         mediaSession.release()
         exoPlayer.release()
         instance = null
