@@ -68,7 +68,7 @@ fun PlayerScreen(
     val currentTrack by playerViewModel.currentTrack.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val currentPosition by playerViewModel.currentPosition.collectAsState()
-    val duration = playerViewModel.exoPlayer.duration.takeIf { it > 0 } ?: 0L
+    val duration by playerViewModel.duration.collectAsState()
 
     if (currentTrack == null) return
 
@@ -138,7 +138,7 @@ fun PlayerScreen(
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { playerViewModel.togglePlay() }) {
+                IconButton(onClick = { playerViewModel.togglePlayPause() }) {
                     Icon(
                         if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = "Play/Pause",

@@ -1,37 +1,21 @@
 package com.sumi.flowplay.ui.player
 
+import androidx.annotation.OptIn
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.util.UnstableApi
 import com.sumi.flowplay.data.model.Track
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import com.sumi.flowplay.service.MusicPlayerService
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class PlayerViewModel @Inject constructor(
-    val exoPlayer: ExoPlayer
-) : ViewModel() {
+class PlayerViewModel : ViewModel() {
 
-    private val _trackList = MutableStateFlow<List<Track>>(emptyList())
-    val trackList: StateFlow<List<Track>> = _trackList.asStateFlow()
-
-    private val _currentIndex = MutableStateFlow(0)
-    val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
-
-    val currentTrack: StateFlow<Track?> = _currentIndex.map { idx ->
-        _trackList.value.getOrNull(idx)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    private val _currentTrack = MutableStateFlow<Track?>(null)
+    val currentTrack: StateFlow<Track?> = _currentTrack.asStateFlow()
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
@@ -39,78 +23,53 @@ class PlayerViewModel @Inject constructor(
     private val _currentPosition = MutableStateFlow(0L)
     val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
 
-    private var playbackJob: Job? = null
+    private val _duration = MutableStateFlow(0L)
+    val duration: StateFlow<Long> = _duration.asStateFlow()
 
-    init {
-        playbackJob = viewModelScope.launch {
-            while (true) {
-                _currentPosition.value = exoPlayer.currentPosition
-                delay(200)
-            }
-        }
+    val playerCommand = MutableSharedFlow<PlayerCommand>(replay = 1)
+
+    sealed class PlayerCommand {
+        data class Play(val track: Track, val tracks: List<Track>) : PlayerCommand()
+        object TogglePlay : PlayerCommand()
+        object SkipNext : PlayerCommand()
+        object SkipPrevious : PlayerCommand()
+        data class Seek(val position: Long) : PlayerCommand()
     }
 
-    private val listener = object : Player.Listener {
-        override fun onPlaybackStateChanged(state: Int) {
-            if (state == Player.STATE_ENDED) {
-                skipNext()
-            }
+    @OptIn(UnstableApi::class)
+    fun bindService(service: MusicPlayerService) {
+        // 서비스 상태를 그대로 구독
+        viewModelScope.launch {
+            service.currentTrack.collect { _currentTrack.value = it }
         }
-    }
-
-    init {
-        exoPlayer.addListener(listener)
+        viewModelScope.launch {
+            service.isPlaying.collect { _isPlaying.value = it }
+        }
+        viewModelScope.launch {
+            service.currentPosition.collect { _currentPosition.value = it }
+        }
+        viewModelScope.launch {
+            service.duration.collect { _duration.value = it }
+        }
     }
 
     fun play(track: Track, tracks: List<Track>) {
-        _trackList.value = tracks
-        _currentIndex.value = tracks.indexOf(track).takeIf { it >= 0 } ?: 0
-        playCurrent()
+        playerCommand.tryEmit(PlayerCommand.Play(track, tracks))
     }
 
-    private fun playCurrent() {
-        val track = currentTrack.value ?: return
-        if (exoPlayer.isPlaying) {
-            exoPlayer.stop()
-        }
-        exoPlayer.setMediaItem(MediaItem.fromUri(track.streamUrl))
-        exoPlayer.prepare()
-        exoPlayer.play()
-        _isPlaying.value = true
-    }
-
-    fun togglePlay() {
-        if (exoPlayer.isPlaying) {
-            exoPlayer.pause()
-            _isPlaying.value = false
-        } else {
-            exoPlayer.play()
-            _isPlaying.value = true
-        }
+    fun togglePlayPause() {
+        playerCommand.tryEmit(PlayerCommand.TogglePlay)
     }
 
     fun skipNext() {
-        val list = _trackList.value
-        if (list.isEmpty()) return
-        _currentIndex.value = (_currentIndex.value + 1) % list.size
-        playCurrent()
+        playerCommand.tryEmit(PlayerCommand.SkipNext)
     }
 
     fun skipPrevious() {
-        val list = _trackList.value
-        if (list.isEmpty()) return
-        _currentIndex.value = if (_currentIndex.value - 1 < 0) list.size - 1 else _currentIndex.value - 1
-        playCurrent()
+        playerCommand.tryEmit(PlayerCommand.SkipPrevious)
     }
 
     fun seekTo(position: Long) {
-        exoPlayer.seekTo(position)
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        playbackJob?.cancel()
-        exoPlayer.removeListener(listener)
-        exoPlayer.release()
+        playerCommand.tryEmit(PlayerCommand.Seek(position))
     }
 }
