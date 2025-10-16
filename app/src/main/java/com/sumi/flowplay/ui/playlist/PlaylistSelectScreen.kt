@@ -41,6 +41,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.sumi.flowplay.R
 import com.sumi.flowplay.ui.player.PlayerViewModel
@@ -184,24 +185,41 @@ fun PlaylistSelectScreen(
 
     // 새 플레이리스트 생성 다이얼로그
     if (showCreateDialog) {
+        var showError by remember { mutableStateOf(false) }
+
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
             title = { Text(stringResource(R.string.new_playlist_dialog_title)) },
             text = {
-                TextField(
-                    value = newPlaylistName,
-                    onValueChange = { newPlaylistName = it },
-                    label = { Text(stringResource(R.string.playlist_name_label)) },
-                    singleLine = true
-                )
+                Column {
+                    TextField(
+                        value = newPlaylistName,
+                        onValueChange = {
+                            newPlaylistName = it
+                            showError = false
+                        },
+                        label = { Text(stringResource(R.string.playlist_name_label)) },
+                        singleLine = true
+                    )
+                    if (showError) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.playlist_name_exists), // "이미 존재하는 이름입니다" 같은 문자열
+                            color = Color.Red,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
             },
             confirmButton = {
+                val existing = playlists.any { it.name == newPlaylistName }
                 TextButton(onClick = {
-                    if (newPlaylistName.isNotBlank()) {
+                    if (newPlaylistName.isNotBlank() && !existing) {
                         playlistViewModel.addPlaylist(newPlaylistName)
-                        selectedPlaylists[newPlaylistName.hashCode().toLong()] = true
                         newPlaylistName = ""
                         showCreateDialog = false
+                    } else {
+                        showError = true
                     }
                 }) {
                     Text(stringResource(R.string.create))

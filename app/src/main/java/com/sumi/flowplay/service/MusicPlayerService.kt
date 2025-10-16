@@ -386,6 +386,7 @@ class MusicPlayerService : Service() {
         exoPlayer.stop()
         exoPlayer.setMediaItem(MediaItem.fromUri(track.streamUrl))
         exoPlayer.prepare()
+        exoPlayer.pause()
         _isPlaying.value = false
         _currentTrack.value = track
 

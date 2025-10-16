@@ -39,9 +39,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +57,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,7 +73,9 @@ fun PlayerScreen(
     onAddToPlaylist: () -> Unit,
     onBack: () -> Unit
 ) {
+    val favoritesPlaylistId = stringResource(R.string.favorites_playlist_name).hashCode().toLong() // 좋아요 플레이리스트 Id
     val currentTrack by playerViewModel.currentTrack.collectAsState()
+    val favoriteTracks by playlistViewModel.getTracksOfPlaylist(favoritesPlaylistId).collectAsState(initial = emptyList())
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isShuffleMode by playerViewModel.isShuffleMode.collectAsState()
     val repeatMode by playerViewModel.repeatMode.collectAsState()
@@ -79,8 +84,10 @@ fun PlayerScreen(
 
     if (currentTrack == null) return
 
-    val favoritesPlaylistId = stringResource(R.string.favorites_playlist_name).hashCode().toLong() // 좋아요 플레이리스트 Id
-    val isFavorite = playlistViewModel.isTrackInPlaylist(favoritesPlaylistId, currentTrack!!.id)
+    // 현재 트랙이 즐겨찾기 안에 있는지 실시간으로 판단
+    val isFavorite = remember(currentTrack, favoriteTracks) {
+        favoriteTracks.any { it.id == currentTrack?.id }
+    }
 
     Scaffold(
         topBar = {
@@ -115,8 +122,8 @@ fun PlayerScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            Text(currentTrack!!.name, fontWeight = FontWeight.Bold, fontSize = 24.sp)
-            Text(currentTrack!!.artistName, fontSize = 18.sp, color = Color.Gray)
+            Text(currentTrack!!.name, fontWeight = FontWeight.Bold, fontSize = 24.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+            Text(currentTrack!!.artistName, fontSize = 18.sp, color = Color.Gray, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -141,7 +148,9 @@ fun PlayerScreen(
                     Icon(
                         if (isShuffleMode) Icons.Filled.ShuffleOn else Icons.Filled.Shuffle,
                         contentDescription = "Shuffle",
-                        modifier = Modifier.padding(0.dp).size(24.dp)
+                        modifier = Modifier
+                            .padding(0.dp)
+                            .size(24.dp)
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
@@ -149,7 +158,9 @@ fun PlayerScreen(
                     Icon(
                         Icons.Default.SkipPrevious,
                         contentDescription = "Previous",
-                        modifier = Modifier.padding(0.dp).size(48.dp)
+                        modifier = Modifier
+                            .padding(0.dp)
+                            .size(48.dp)
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
@@ -157,7 +168,9 @@ fun PlayerScreen(
                     Icon(
                         if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = "Play/Pause",
-                        modifier = Modifier.padding(0.dp).size(48.dp)
+                        modifier = Modifier
+                            .padding(0.dp)
+                            .size(48.dp)
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
@@ -165,7 +178,9 @@ fun PlayerScreen(
                     Icon(
                         Icons.Default.SkipNext,
                         contentDescription = "Next",
-                        modifier = Modifier.padding(0.dp).size(48.dp)
+                        modifier = Modifier
+                            .padding(0.dp)
+                            .size(48.dp)
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
@@ -179,7 +194,9 @@ fun PlayerScreen(
                             Icons.Filled.Repeat
                         },
                         contentDescription = "Repeat",
-                        modifier = Modifier.padding(0.dp).size(24.dp)
+                        modifier = Modifier
+                            .padding(0.dp)
+                            .size(24.dp)
                     )
                 }
             }
@@ -220,7 +237,9 @@ fun PlayerScreen(
                     Icon(
                         Icons.AutoMirrored.Filled.QueueMusic,
                         contentDescription = "Add to Playlist",
-                        modifier = Modifier.padding(0.dp).size(28.dp)
+                        modifier = Modifier
+                            .padding(0.dp)
+                            .size(28.dp)
                     )
                 }
             }
