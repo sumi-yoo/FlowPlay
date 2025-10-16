@@ -1,7 +1,9 @@
 package com.sumi.flowplay.service
 
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
@@ -36,7 +38,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -69,7 +70,29 @@ class MusicPlayerService : Service() {
     }
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(state: Int) {
-            if (state == Player.STATE_ENDED) skipNext()
+            if (state == Player.STATE_ENDED) {
+                when (_repeatMode.value) {
+                    0 -> { // 반복 없음
+                        if (currentIndex < trackList.lastIndex) {
+                            skipNext()
+                        } else {
+                            currentIndex = (currentIndex + 1) % trackList.size
+                            finishTrack()
+                        }
+                    }
+                    1 -> { // 전체 반복
+                        if (currentIndex < trackList.lastIndex) {
+                            skipNext()
+                        } else {
+                            currentIndex = 0
+                            playCurrent()
+                        }
+                    }
+                    2 -> { // 한 곡 반복
+                        playCurrent()
+                    }
+                }
+            }
             _duration.value = exoPlayer.duration.takeIf { it > 0 } ?: 0L
         }
     }
@@ -87,8 +110,8 @@ class MusicPlayerService : Service() {
     private val _isShuffleMode = MutableStateFlow(false)
     val isShuffleMode: StateFlow<Boolean> = _isShuffleMode.asStateFlow()
 
-    private val _isRepeatMode = MutableStateFlow(0)
-    val isRepeatMode: StateFlow<Int> = _isRepeatMode.asStateFlow()
+    private val _repeatMode = MutableStateFlow(0)
+    val repeatMode: StateFlow<Int> = _repeatMode.asStateFlow()
 
     private val _currentPosition = MutableStateFlow(0L)
     val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
@@ -106,7 +129,7 @@ class MusicPlayerService : Service() {
                 _isShuffleMode.value = value
             }
             playerPrefs.repeatMode.collect { value ->
-                _isRepeatMode.value = value
+                _repeatMode.value = value
             }
         }
         createMediaSession()
@@ -119,11 +142,9 @@ class MusicPlayerService : Service() {
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onPlay() {
                     togglePlayPause()
-                    showForegroundNotification()
                 }
                 override fun onPause() {
                     togglePlayPause()
-                    showForegroundNotification()
                 }
                 override fun onSkipToNext() {
                     skipNext()
@@ -144,8 +165,7 @@ class MusicPlayerService : Service() {
                             showForegroundNotification()
                         }
                         "ACTION_TOGGLE_REPEAT" -> {
-                            if (_isRepeatMode.value == 2) _isRepeatMode.value = 0;
-                            else _isRepeatMode.value++
+                            toggleRepeat()
                             showForegroundNotification()
                         }
                     }
@@ -165,9 +185,9 @@ class MusicPlayerService : Service() {
 
         val repeatAction = PlaybackStateCompat.CustomAction.Builder(
             "ACTION_TOGGLE_REPEAT", "Repeat",
-            if (_isRepeatMode.value == 1) {
+            if (_repeatMode.value == 1) {
                 R.drawable.ic_repeat_on
-            } else if (_isRepeatMode.value == 2) {
+            } else if (_repeatMode.value == 2) {
                 R.drawable.ic_repeat_one_on
             } else {
                 R.drawable.ic_repeat
@@ -193,7 +213,10 @@ class MusicPlayerService : Service() {
     private fun showForegroundNotification() {
         val track = _currentTrack.value ?: return
 
-        val notificationIntent = Intent(this, MainActivity::class.java)
+        val notificationIntent = Intent(this, MainActivity::class.java).apply {
+            putExtra("navigate_to_player", true) // 클릭 시 PlayerScreen으로 이동
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
         val contentIntent = PendingIntent.getActivity(
             this, 0, notificationIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -210,9 +233,9 @@ class MusicPlayerService : Service() {
         )
 
         val repeatAction = NotificationCompat.Action(
-            if (_isRepeatMode.value == 1) {
+            if (_repeatMode.value == 1) {
                 R.drawable.ic_repeat_on
-            } else if (_isRepeatMode.value == 2) {
+            } else if (_repeatMode.value == 2) {
                 R.drawable.ic_repeat_one_on
             } else {
                 R.drawable.ic_repeat
@@ -223,6 +246,15 @@ class MusicPlayerService : Service() {
                 Intent(this, MusicPlayerService::class.java).apply { action = "ACTION_TOGGLE_REPEAT" },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+        )
+
+        val deleteIntent = PendingIntent.getService(
+            this,
+            0,
+            Intent(this, MusicPlayerService::class.java).apply {
+                action = "ACTION_STOP_SERVICE"
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(this@MusicPlayerService, CHANNEL_ID)
@@ -238,7 +270,8 @@ class MusicPlayerService : Service() {
                     .setMediaSession(mediaSession.sessionToken)
                      .setShowActionsInCompactView(0, 1)
             )
-            .setOngoing(true)
+            .setDeleteIntent(deleteIntent)
+            .setOngoing(_isPlaying.value)
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -347,6 +380,18 @@ class MusicPlayerService : Service() {
         )
     }
 
+    private fun finishTrack() {
+        val track = trackList.getOrNull(currentIndex) ?: return
+        exoPlayer.stop()
+        exoPlayer.setMediaItem(MediaItem.fromUri(track.streamUrl))
+        exoPlayer.prepare()
+        _isPlaying.value = false
+        _currentTrack.value = track
+
+        updatePlaybackState(PlaybackStateCompat.STATE_PAUSED)
+        showForegroundNotification()
+    }
+
     fun toggleShuffle() {
         if (trackList.isEmpty()) return
 
@@ -380,6 +425,18 @@ class MusicPlayerService : Service() {
         }
     }
 
+    fun toggleRepeat() {
+        val nextMode = when (_repeatMode.value) {
+            0 -> 1
+            1 -> 2
+            2 -> 0
+            else -> 0
+        }
+        _repeatMode.value = nextMode
+        serviceScope.launch { playerPrefs.setRepeatMode(nextMode) }
+        showForegroundNotification()
+    }
+
     suspend fun loadAlbumArtBitmap(url: String): Bitmap? = withContext(Dispatchers.IO) {
         try {
             val loader = ImageLoader.Builder(applicationContext)
@@ -395,6 +452,54 @@ class MusicPlayerService : Service() {
         }
     }
 
+    private fun stopServiceSafely() {
+        Log.d("MusicPlayerService", "Stopping service safely")
+
+        try {
+            // 포그라운드 종료 + 알림 제거
+            try {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                nm.cancel(NOTIFICATION_ID)
+            } catch (e: Exception) {
+                Log.e("MusicPlayerService", "Notification cleanup failed: ${e.message}")
+            }
+
+            // ExoPlayer 정리
+            try {
+                exoPlayer.removeListener(playerListener)
+                exoPlayer.release()
+            } catch (e: Exception) {
+                Log.e("MusicPlayerService", "ExoPlayer release failed: ${e.message}")
+            }
+
+            // MediaSession 정리
+            try {
+                mediaSession.apply {
+                    isActive = false
+                    setCallback(null)
+                    release()
+                }
+            } catch (e: Exception) {
+                Log.e("MusicPlayerService", "MediaSession release failed: ${e.message}")
+            }
+
+            // CoroutineScope 취소
+            try {
+                serviceScope.cancel()
+            } catch (e: Exception) {
+                Log.e("MusicPlayerService", "ServiceScope cancel failed: ${e.message}")
+            }
+
+        } finally {
+            // 인스턴스 초기화 + 서비스 종료
+            instance = null
+            stopSelf()
+            Log.d("MusicPlayerService", "Service stopped safely")
+        }
+    }
+
+
     inner class LocalBinder : Binder() {
         fun getService(): MusicPlayerService = this@MusicPlayerService
     }
@@ -402,20 +507,25 @@ class MusicPlayerService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onDestroy() {
-        positionUpdateJob?.cancel()
-
-        mediaSession.run {
-            setCallback(null)  // 콜백 제거 → MediaController가 더 이상 접근하지 않음
-            try {
-                release()      // 세션 해제
-            } catch (e: DeadObjectException) {
-                // 세션이 죽어도 안전하게 무시
-            }
-        }
-
-        exoPlayer.release()
-        instance = null
-        serviceScope.cancel()
+        stopServiceSafely()
         super.onDestroy()
     }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            "ACTION_STOP_SERVICE" -> {
+                // 포그라운드 종료 + 알림 제거
+                try {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    nm.cancel(NOTIFICATION_ID)
+                } catch (e: Exception) {
+                    Log.e("MusicPlayerService", "Notification cleanup failed: ${e.message}")
+                }
+                stopSelf()
+            }
+        }
+        return START_STICKY
+    }
+
 }

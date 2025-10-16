@@ -23,8 +23,8 @@ class PlayerViewModel : ViewModel() {
     private val _isShuffleMode = MutableStateFlow(false)
     val isShuffleMode: StateFlow<Boolean> = _isShuffleMode.asStateFlow()
 
-    private val _isRepeatMode = MutableStateFlow(0)
-    val isRepeatMode: StateFlow<Int> = _isRepeatMode.asStateFlow()
+    private val _repeatMode = MutableStateFlow(0)
+    val repeatMode: StateFlow<Int> = _repeatMode.asStateFlow()
 
     private val _currentPosition = MutableStateFlow(0L)
     val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
@@ -41,6 +41,7 @@ class PlayerViewModel : ViewModel() {
         data object SkipPrevious : PlayerCommand()
         data class Seek(val position: Long) : PlayerCommand()
         data object ToggleShuffle : PlayerCommand()
+        data object ToggleRepeat : PlayerCommand()
     }
 
     @OptIn(UnstableApi::class)
@@ -56,7 +57,7 @@ class PlayerViewModel : ViewModel() {
             service.isShuffleMode.collect { _isShuffleMode.value = it }
         }
         viewModelScope.launch {
-            service.isRepeatMode.collect { _isRepeatMode.value = it }
+            service.repeatMode.collect { _repeatMode.value = it }
         }
         viewModelScope.launch {
             service.currentPosition.collect { _currentPosition.value = it }
@@ -88,5 +89,9 @@ class PlayerViewModel : ViewModel() {
 
     fun toggleShuffle() {
         playerCommand.tryEmit(PlayerCommand.ToggleShuffle)
+    }
+
+    fun toggleRepeat() {
+        playerCommand.tryEmit(PlayerCommand.ToggleRepeat)
     }
 }

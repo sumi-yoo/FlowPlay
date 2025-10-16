@@ -73,7 +73,7 @@ fun PlayerScreen(
     val currentTrack by playerViewModel.currentTrack.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val isShuffleMode by playerViewModel.isShuffleMode.collectAsState()
-    val isRepeatMode by playerViewModel.isRepeatMode.collectAsState()
+    val repeatMode by playerViewModel.repeatMode.collectAsState()
     val currentPosition by playerViewModel.currentPosition.collectAsState()
     val duration by playerViewModel.duration.collectAsState()
 
@@ -169,11 +169,11 @@ fun PlayerScreen(
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { playerViewModel.skipPrevious() }) {
+                IconButton(onClick = { playerViewModel.toggleRepeat() }) {
                     Icon(
-                        if (isRepeatMode == 1) {
+                        if (repeatMode == 1) {
                             Icons.Filled.RepeatOn
-                        } else if (isRepeatMode == 2) {
+                        } else if (repeatMode == 2) {
                             Icons.Filled.RepeatOneOn
                         } else {
                             Icons.Filled.Repeat

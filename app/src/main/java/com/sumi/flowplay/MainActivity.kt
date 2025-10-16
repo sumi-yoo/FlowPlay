@@ -34,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
 
     private var musicService: MusicPlayerService? = null
     private var isBound = false
+    private var navigateToPlayer: Boolean = false
 
     private val playerViewModel: PlayerViewModel by viewModels()
 
@@ -79,10 +81,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        navigateToPlayer = intent?.getBooleanExtra("navigate_to_player", false) == true
+
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
-                MainScreen(playerViewModel)
+                val navController = rememberNavController() // Activity 멤버 변수 초기
+                MainScreen(navController, playerViewModel)
+                LaunchedEffect(Unit) {
+                    if (navigateToPlayer) {
+                        navController.navigate("player")
+                        navigateToPlayer = false
+                    }
+                }
             }
         }
 
@@ -117,6 +128,7 @@ class MainActivity : ComponentActivity() {
                         PlayerViewModel.PlayerCommand.SkipPrevious -> service.skipPrevious()
                         is PlayerViewModel.PlayerCommand.Seek -> service.seekTo(command.position)
                         PlayerViewModel.PlayerCommand.ToggleShuffle -> service.toggleShuffle()
+                        PlayerViewModel.PlayerCommand.ToggleRepeat -> service.toggleRepeat()
                     }
                 }
             }
@@ -125,8 +137,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(playerViewModel: PlayerViewModel) {
-    val navController = rememberNavController()
+fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewModel) {
     val searchViewModel: SearchViewViewModel = hiltViewModel()
     val playlistViewModel: PlaylistViewModel = hiltViewModel()
 
