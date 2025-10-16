@@ -11,7 +11,6 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Binder
 import android.os.Build
 import android.os.Bundle
-import android.os.DeadObjectException
 import android.os.IBinder
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
@@ -271,7 +270,7 @@ class MusicPlayerService : Service() {
                      .setShowActionsInCompactView(0, 1)
             )
             .setDeleteIntent(deleteIntent)
-            .setOngoing(_isPlaying.value)
+            .setOngoing(exoPlayer.isPlaying)
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -336,6 +335,8 @@ class MusicPlayerService : Service() {
 
     private fun playCurrent() {
         val track = trackList.getOrNull(currentIndex) ?: return
+        if (positionUpdateJob == null) startUpdatingPosition()
+
         exoPlayer.stop()
         exoPlayer.setMediaItem(MediaItem.fromUri(track.streamUrl))
         exoPlayer.prepare()
@@ -456,15 +457,6 @@ class MusicPlayerService : Service() {
         Log.d("MusicPlayerService", "Stopping service safely")
 
         try {
-            // 포그라운드 종료 + 알림 제거
-            try {
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                nm.cancel(NOTIFICATION_ID)
-            } catch (e: Exception) {
-                Log.e("MusicPlayerService", "Notification cleanup failed: ${e.message}")
-            }
-
             // ExoPlayer 정리
             try {
                 exoPlayer.removeListener(playerListener)
@@ -484,6 +476,15 @@ class MusicPlayerService : Service() {
                 Log.e("MusicPlayerService", "MediaSession release failed: ${e.message}")
             }
 
+            // 포그라운드 종료 + 알림 제거
+            try {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                nm.cancel(NOTIFICATION_ID)
+            } catch (e: Exception) {
+                Log.e("MusicPlayerService", "Notification cleanup failed: ${e.message}")
+            }
+
             // CoroutineScope 취소
             try {
                 serviceScope.cancel()
@@ -494,6 +495,7 @@ class MusicPlayerService : Service() {
         } finally {
             // 인스턴스 초기화 + 서비스 종료
             instance = null
+            positionUpdateJob?.cancel()
             stopSelf()
             Log.d("MusicPlayerService", "Service stopped safely")
         }
@@ -514,14 +516,7 @@ class MusicPlayerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             "ACTION_STOP_SERVICE" -> {
-                // 포그라운드 종료 + 알림 제거
-                try {
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                    val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                    nm.cancel(NOTIFICATION_ID)
-                } catch (e: Exception) {
-                    Log.e("MusicPlayerService", "Notification cleanup failed: ${e.message}")
-                }
+                positionUpdateJob?.cancel()
                 stopSelf()
             }
         }
