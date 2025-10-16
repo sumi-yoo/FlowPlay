@@ -28,6 +28,11 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.RepeatOn
+import androidx.compose.material.icons.filled.RepeatOneOn
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.ShuffleOn
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,6 +72,8 @@ fun PlayerScreen(
 ) {
     val currentTrack by playerViewModel.currentTrack.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
+    val isShuffleMode by playerViewModel.isShuffleMode.collectAsState()
+    val isRepeatMode by playerViewModel.isRepeatMode.collectAsState()
     val currentPosition by playerViewModel.currentPosition.collectAsState()
     val duration by playerViewModel.duration.collectAsState()
 
@@ -130,6 +137,14 @@ fun PlayerScreen(
             Row(
                 modifier = Modifier.fillMaxWidth()
             ) {
+                IconButton(onClick = { playerViewModel.toggleShuffle() }) {
+                    Icon(
+                        if (isShuffleMode) Icons.Filled.ShuffleOn else Icons.Filled.Shuffle,
+                        contentDescription = "Shuffle",
+                        modifier = Modifier.padding(0.dp).size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
                 IconButton(onClick = { playerViewModel.skipPrevious() }) {
                     Icon(
                         Icons.Default.SkipPrevious,
@@ -151,6 +166,20 @@ fun PlayerScreen(
                         Icons.Default.SkipNext,
                         contentDescription = "Next",
                         modifier = Modifier.padding(0.dp).size(48.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = { playerViewModel.skipPrevious() }) {
+                    Icon(
+                        if (isRepeatMode == 1) {
+                            Icons.Filled.RepeatOn
+                        } else if (isRepeatMode == 2) {
+                            Icons.Filled.RepeatOneOn
+                        } else {
+                            Icons.Filled.Repeat
+                        },
+                        contentDescription = "Repeat",
+                        modifier = Modifier.padding(0.dp).size(24.dp)
                     )
                 }
             }

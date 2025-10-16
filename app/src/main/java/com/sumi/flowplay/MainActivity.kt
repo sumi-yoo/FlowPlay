@@ -116,6 +116,7 @@ class MainActivity : ComponentActivity() {
                         PlayerViewModel.PlayerCommand.SkipNext -> service.skipNext()
                         PlayerViewModel.PlayerCommand.SkipPrevious -> service.skipPrevious()
                         is PlayerViewModel.PlayerCommand.Seek -> service.seekTo(command.position)
+                        PlayerViewModel.PlayerCommand.ToggleShuffle -> service.toggleShuffle()
                     }
                 }
             }

@@ -20,7 +20,7 @@ class MyApplication : Application() {
         val channel = NotificationChannel(
             MusicPlayerService.CHANNEL_ID,
             getString(R.string.channel_name_music_playback),
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_LOW
         ).apply {
             description = getString(R.string.channel_desc_music_playback)
         }

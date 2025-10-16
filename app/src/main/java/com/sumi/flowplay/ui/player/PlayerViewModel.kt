@@ -20,6 +20,12 @@ class PlayerViewModel : ViewModel() {
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
+    private val _isShuffleMode = MutableStateFlow(false)
+    val isShuffleMode: StateFlow<Boolean> = _isShuffleMode.asStateFlow()
+
+    private val _isRepeatMode = MutableStateFlow(0)
+    val isRepeatMode: StateFlow<Int> = _isRepeatMode.asStateFlow()
+
     private val _currentPosition = MutableStateFlow(0L)
     val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
 
@@ -30,10 +36,11 @@ class PlayerViewModel : ViewModel() {
 
     sealed class PlayerCommand {
         data class Play(val track: Track, val tracks: List<Track>) : PlayerCommand()
-        object TogglePlay : PlayerCommand()
-        object SkipNext : PlayerCommand()
-        object SkipPrevious : PlayerCommand()
+        data object TogglePlay : PlayerCommand()
+        data object SkipNext : PlayerCommand()
+        data object SkipPrevious : PlayerCommand()
         data class Seek(val position: Long) : PlayerCommand()
+        data object ToggleShuffle : PlayerCommand()
     }
 
     @OptIn(UnstableApi::class)
@@ -44,6 +51,12 @@ class PlayerViewModel : ViewModel() {
         }
         viewModelScope.launch {
             service.isPlaying.collect { _isPlaying.value = it }
+        }
+        viewModelScope.launch {
+            service.isShuffleMode.collect { _isShuffleMode.value = it }
+        }
+        viewModelScope.launch {
+            service.isRepeatMode.collect { _isRepeatMode.value = it }
         }
         viewModelScope.launch {
             service.currentPosition.collect { _currentPosition.value = it }
@@ -71,5 +84,9 @@ class PlayerViewModel : ViewModel() {
 
     fun seekTo(position: Long) {
         playerCommand.tryEmit(PlayerCommand.Seek(position))
+    }
+
+    fun toggleShuffle() {
+        playerCommand.tryEmit(PlayerCommand.ToggleShuffle)
     }
 }
