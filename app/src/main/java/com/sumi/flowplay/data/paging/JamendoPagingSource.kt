@@ -47,11 +47,20 @@ class JamendoPagingSource(
                 }
 
             } catch (e: Exception) {
-                return LoadResult.Error(e)
+                return LoadResult.Page(
+                    data = tracks,
+                    prevKey = if (page == 1) null else page - 1,
+                    nextKey = if (tracks.isEmpty()) null else page + 1
+                )
             }
         }
 
-        return LoadResult.Error(Exception("Empty result after $MAX_RETRY retries for page $page"))
+        // 결과가 없어도 빈 리스트로 Page 반환
+        return LoadResult.Page(
+            data = tracks,
+            prevKey = if (page == 1) null else page - 1,
+            nextKey = if (tracks.isEmpty()) null else page + 1
+        )
     }
 
     override fun getRefreshKey(state: PagingState<Int, Track>): Int? {

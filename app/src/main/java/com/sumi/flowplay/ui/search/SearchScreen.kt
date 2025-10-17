@@ -43,15 +43,19 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.paging.LoadState
 import coil.compose.AsyncImage
 import com.sumi.flowplay.data.model.Track
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
+import com.sumi.flowplay.R
 import com.sumi.flowplay.ui.player.PlayerViewModel
 import com.sumi.flowplay.ui.player.PlayingWave
 
@@ -145,24 +149,44 @@ fun SearchScreen(
             } else {
                 // 검색 결과 화면
                 Spacer(modifier = Modifier.height(8.dp))
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp) // 아이템 사이 간격 4dp
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    items(tracks) { track ->
-                        track?.let {
-                            TrackItem(track = it, isCurrentTrack = currentTrack?.id == track.id, isPlaying = isPlaying) {
-                                val currentTrackList = (0 until tracks.itemCount)
-                                    .mapNotNull { index -> tracks.peek(index) }
-                                onTrackClick(it, currentTrackList)
+                    if (tracks.itemCount == 0) {
+                        // 검색 결과 없음 표시
+                        Text(
+                            text = stringResource(R.string.no_search_results),
+                            color = Color.Gray,
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp) // 아이템 사이 간격 4dp
+                        ) {
+                            items(tracks) { track ->
+                                track?.let {
+                                    TrackItem(
+                                        track = it,
+                                        isCurrentTrack = currentTrack?.id == track.id,
+                                        isPlaying = isPlaying
+                                    ) {
+                                        val currentTrackList = (0 until tracks.itemCount)
+                                            .mapNotNull { index -> tracks.peek(index) }
+                                        onTrackClick(it, currentTrackList)
+                                    }
+                                }
                             }
                         }
                     }
+
+                    if (tracks.loadState.refresh is LoadState.Loading || tracks.loadState.append is LoadState.Loading) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
                 }
             }
-        }
-
-        if (tracks.loadState.refresh is LoadState.Loading || tracks.loadState.append is LoadState.Loading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
     }
 }
