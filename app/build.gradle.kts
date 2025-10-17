@@ -90,6 +90,8 @@ dependencies {
     kapt("androidx.room:room-compiler:2.7.0-alpha07")
     // media
     implementation("androidx.media:media:1.6.0")
+    // serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 }
 
 kapt {
