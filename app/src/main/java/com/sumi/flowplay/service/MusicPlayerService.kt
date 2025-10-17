@@ -330,7 +330,10 @@ class MusicPlayerService : Service() {
             }
             currentIndex = 0
         }
-        playCurrent()
+
+        if (_currentTrack.value?.id != track.id) {
+            playCurrent()
+        }
     }
 
     private fun playCurrent() {

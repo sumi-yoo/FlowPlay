@@ -60,7 +60,6 @@ class MainActivity : ComponentActivity() {
 
     private var musicService: MusicPlayerService? = null
     private var isBound = false
-    private var navigateToPlayer: Boolean = false
 
     private val playerViewModel: PlayerViewModel by viewModels()
 
@@ -81,25 +80,26 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        navigateToPlayer = intent?.getBooleanExtra("navigate_to_player", false) == true
+
+        val navigateToPlayer = savedInstanceState == null && intent?.getBooleanExtra("navigate_to_player", false) == true
+
+        // 음악 서비스 시작 (앱 실행 시 백그라운드에서 재생 준비)
+        Intent(this, MusicPlayerService::class.java).also { intent ->
+            startService(intent)
+        }
 
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
                 val navController = rememberNavController() // Activity 멤버 변수 초기
                 MainScreen(navController, playerViewModel)
-                LaunchedEffect(Unit) {
+                LaunchedEffect(navigateToPlayer) {
                     if (navigateToPlayer) {
                         navController.navigate("player")
-                        navigateToPlayer = false
                     }
                 }
             }
         }
-
-        // 음악 서비스 시작 (앱 실행 시 백그라운드에서 재생 준비)
-        val serviceIntent = Intent(this, MusicPlayerService::class.java)
-        ContextCompat.startForegroundService(this, serviceIntent)
     }
 
     override fun onStart() {
