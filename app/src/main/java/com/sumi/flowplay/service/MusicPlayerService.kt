@@ -257,7 +257,7 @@ class MusicPlayerService : Service() {
         )
 
         val notification = NotificationCompat.Builder(this@MusicPlayerService, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_music_noti)
+            .setSmallIcon(R.drawable.ic_noti_flow_play)
             .setContentTitle(track.name)
             .setContentText(track.artistName)
             .setContentIntent(contentIntent)

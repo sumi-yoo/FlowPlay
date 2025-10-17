@@ -6,8 +6,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,11 +41,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +52,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
@@ -262,25 +265,70 @@ fun CustomProgressBar(
     onSeek: (Long) -> Unit
 ) {
     val progress = if (duration > 0) currentPosition.toFloat() / duration else 0f
+    var dragProgress by remember { mutableStateOf(progress) }
+    var isDragging by remember { mutableStateOf(false) }
 
-    Box(
+    Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(6.dp)
-            .background(Color.White, RectangleShape)
-            .pointerInput(Unit) {
+            .height(24.dp) // thumb 드래그 영역 확보
+            .pointerInput(duration) {
                 detectTapGestures { offset ->
                     val newProgress = (offset.x / size.width).coerceIn(0f, 1f)
                     onSeek((newProgress * duration).toLong())
+                    dragProgress = newProgress
                 }
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        isDragging = true
+                        dragProgress = (offset.x / size.width).coerceIn(0f, 1f)
+                    },
+                    onDrag = { change, _ ->
+                        dragProgress = (change.position.x / size.width).coerceIn(0f, 1f)
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                        onSeek((dragProgress * duration).toLong())
+                    }
+                )
             }
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(progress)
-                .height(6.dp)
-                .background(Color(0xFF1DB954), RectangleShape)
+        val barHeight = 4.dp.toPx()
+        val radius = barHeight / 2
+        val progressWidth = (if (isDragging) dragProgress else progress) * size.width
+
+        // 비활성 바 (배경)
+        drawRoundRect(
+            color = Color(0xFF3E3E3E),
+            size = Size(size.width, barHeight),
+            cornerRadius = CornerRadius(radius, radius),
+            topLeft = Offset(0f, center.y - barHeight / 2)
         )
+
+        // 활성 바 (진행 부분)
+        drawRoundRect(
+            color = Color(0xFF8F44AD),
+            size = Size(width = progressWidth, height = barHeight),
+            cornerRadius = CornerRadius(radius, radius),
+            topLeft = Offset(0f, center.y - barHeight / 2)
+        )
+
+        // thumb (동그란 포인트)
+        val thumbX = progressWidth
+        drawCircle(
+            color =  Color(0xFFA566D9),
+            radius = 7.dp.toPx(),
+            center = Offset(thumbX, center.y)
+        )
+
+        // thumb glow 효과
+        if (isDragging) {
+            drawCircle(
+                color = Color(0xFFA566D9).copy(alpha = 0.3f),
+                radius = 14.dp.toPx(),
+                center = Offset(thumbX, center.y)
+            )
+        }
     }
 }
 
