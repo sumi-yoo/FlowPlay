@@ -43,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import com.sumi.flowplay.R
 import com.sumi.flowplay.ui.player.PlayerViewModel
 
@@ -71,7 +72,11 @@ fun PlaylistSelectScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.playlist_add_title)) },
+                title = { Text(
+                    text = stringResource(R.string.playlist_add_title),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                ) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))

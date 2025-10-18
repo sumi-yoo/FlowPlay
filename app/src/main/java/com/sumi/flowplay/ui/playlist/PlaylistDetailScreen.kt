@@ -62,7 +62,11 @@ fun PlaylistDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(playlist!!.name) },
+                title = { Text(
+                    text = playlist!!.name,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                ) },
                 navigationIcon = {
                     IconButton(onClick = {
                         playlistViewModel.updateDeleteTrackMode(false)
