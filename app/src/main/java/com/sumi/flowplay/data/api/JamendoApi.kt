@@ -12,7 +12,8 @@ interface JamendoApi {
         @Query("limit") limit: Int = 10,
         @Query("offset") offset: Int = 0,          // 페이지 계산용 offset
         @Query("search") query: String? = null,    // 검색어
-        @Query("audioformat") audioFormat: String = "mp31"
+        @Query("audioformat") audioFormat: String = "mp31",
+        @Query("license") license: String = "by,by-sa"
     ): JamendoTrackResponse
 }
 

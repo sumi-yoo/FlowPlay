@@ -30,10 +30,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,8 +46,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -58,6 +62,8 @@ import androidx.paging.compose.items
 import com.sumi.flowplay.R
 import com.sumi.flowplay.ui.player.PlayerViewModel
 import com.sumi.flowplay.ui.player.PlayingWave
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.drop
 
 @Composable
 fun SearchScreen(
@@ -71,26 +77,44 @@ fun SearchScreen(
     val isPlaying by playerViewModel.isPlaying.collectAsState()
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
+    val focusStateFlow = remember { MutableStateFlow(false) }
     val text by searchViewModel.text.collectAsState()
-    var isSearching by remember { mutableStateOf(false) }
+    var tfValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(searchViewModel.text.value))
+    }
+    val isSearching by searchViewModel.isSearching.collectAsState()
+
+    LaunchedEffect(focusStateFlow) {
+        if (isSearching && !focusStateFlow.value) {
+            focusRequester.requestFocus()
+        }
+        focusStateFlow
+            .drop(1) // 초기값 무시
+            .collect {
+                searchViewModel.setSearching(it)
+            }
+    }
 
     BackHandler(enabled = isSearching) {
         // 최근 검색어 화면이면 뒤로가기 시 검색 결과 화면으로 전환
-        isSearching = false
+        searchViewModel.setSearching(false)
         focusManager.clearFocus()
     }
 
     Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         Column {
             OutlinedTextField(
-                value = text,
-                onValueChange = { searchViewModel.onTextChanged(it) },
-                label = { Text("검색") },
+                value = tfValue,
+                onValueChange = {
+                    tfValue = it
+                    searchViewModel.onTextChanged(it.text)
+                },
+                label = { Text(stringResource(R.string.search_title)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester)
                     .onFocusChanged { focusState ->
-                        isSearching = focusState.isFocused
+                        focusStateFlow.value = focusState.isFocused
                     },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -102,7 +126,7 @@ fun SearchScreen(
                             searchViewModel.search()
                         }
                         focusManager.clearFocus()
-                        isSearching = false
+                        searchViewModel.setSearching(false)
                     }
                 ),
                 trailingIcon = {
@@ -112,7 +136,7 @@ fun SearchScreen(
                                 searchViewModel.clearQuery()
                                 if (!isSearching) {
                                     focusRequester.requestFocus()
-                                    isSearching = true
+                                    searchViewModel.setSearching(true)
                                 }
                             }
                         ) {
@@ -133,10 +157,11 @@ fun SearchScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
+                                    tfValue = TextFieldValue(keyword, selection = TextRange(keyword.length))
                                     searchViewModel.onTextChanged(keyword)
                                     searchViewModel.search()
                                     focusManager.clearFocus()
-                                    isSearching = false
+                                    searchViewModel.setSearching(false)
                                 }
                                 .padding(top = 16.dp, bottom = 16.dp, start = 4.dp, end = 4.dp)
                         ) {

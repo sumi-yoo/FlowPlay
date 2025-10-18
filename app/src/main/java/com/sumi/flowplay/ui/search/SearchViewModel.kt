@@ -30,6 +30,9 @@ class SearchViewViewModel @Inject constructor(
     private val _text = MutableStateFlow("")
     val text: StateFlow<String> = _text.asStateFlow()
 
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
     // 검색 실행 이벤트 (검색 버튼 눌렀을 때만 값 emit)
     private val _query = MutableSharedFlow<String>(replay = 1)
 
@@ -67,5 +70,9 @@ class SearchViewViewModel @Inject constructor(
 
     fun clearQuery() {
         _text.value = ""
+    }
+
+    fun setSearching(value: Boolean) {
+        if (_isSearching.value != value) _isSearching.value = value
     }
 }

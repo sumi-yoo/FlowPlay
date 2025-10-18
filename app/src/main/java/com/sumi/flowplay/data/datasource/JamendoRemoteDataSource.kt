@@ -16,7 +16,8 @@ class JamendoRemoteDataSource @Inject constructor(
             query = query,
             offset = offset,
             limit = limit,
-            audioFormat = "mp31"
+            audioFormat = "mp31",
+            license = "by,by-sa"
         )
     }
 }

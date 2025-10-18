@@ -11,7 +11,7 @@ class JamendoPagingSource(
 ) : PagingSource<Int, Track>() {
 
     companion object {
-        private const val MAX_RETRY = 3
+        private const val MAX_RETRY = 5
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Track> {
