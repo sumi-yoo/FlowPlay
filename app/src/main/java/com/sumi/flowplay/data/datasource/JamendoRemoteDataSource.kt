@@ -1,7 +1,7 @@
 package com.sumi.flowplay.data.datasource
 
 import com.sumi.flowplay.data.api.JamendoApi
-import com.sumi.flowplay.data.api.JamendoTrackResponse
+import com.sumi.flowplay.data.model.JamendoTrackResponse
 import javax.inject.Inject
 import javax.inject.Named
 

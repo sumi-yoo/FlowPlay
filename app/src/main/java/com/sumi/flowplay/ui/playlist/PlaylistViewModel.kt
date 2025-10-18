@@ -82,9 +82,10 @@ class PlaylistViewModel @Inject constructor(
     }
 
     fun addPlaylist(name: String) {
-        val playlistId = name.hashCode().toLong()
+        val trimmedName = name.trim()
+        val playlistId = trimmedName.hashCode().toLong()
         viewModelScope.launch {
-            repository.addPlaylist(Playlist(id = playlistId, name = name))
+            repository.addPlaylist(Playlist(id = playlistId, name = trimmedName))
         }
     }
 

@@ -216,7 +216,7 @@ fun PlaylistSelectScreen(
                 }
             },
             confirmButton = {
-                val existing = playlists.any { it.name == playlistViewModel.newPlaylistName }
+                val existing = playlists.any { it.name == playlistViewModel.newPlaylistName.trim() }
                 TextButton(onClick = {
                     if (playlistViewModel.newPlaylistName.isNotBlank() && !existing) {
                         playlistViewModel.addPlaylist(playlistViewModel.newPlaylistName)

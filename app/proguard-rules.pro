@@ -1,21 +1,125 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+#######################################
+# Room (Entity / DAO / Database)
+#######################################
+-keep class androidx.room.** { *; }
+-keep interface androidx.room.** { *; }
+-keep @androidx.room.* class * { *; }
+-dontwarn androidx.room.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+#######################################
+# Retrofit + Gson
+#######################################
+-keep interface retrofit2.** { *; }
+-keep class retrofit2.** { *; }
+-dontwarn retrofit2.**
+-dontwarn okhttp3.**
+-dontwarn okio.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Gson 직렬화 필드 유지
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+-keepattributes Signature
+-keepattributes *Annotation*
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# DTO 및 Response 모델 유지
+-keep class com.sumi.flowplay.data.model.** { *; }
+
+#######################################
+# Hilt (Dagger)
+#######################################
+-keep class dagger.hilt.** { *; }
+-keep class * extends dagger.hilt.internal.GeneratedComponentManager { *; }
+-keep class * extends dagger.hilt.internal.GeneratedComponent { *; }
+-keep class * implements dagger.hilt.internal.GeneratedComponent { *; }
+-keep class * implements dagger.hilt.internal.GeneratedComponentManager { *; }
+-keep class * {
+    @dagger.hilt.InstallIn <fields>;
+}
+-keepattributes *Annotation*
+-dontwarn dagger.**
+-dontwarn javax.inject.**
+
+#######################################
+# DataStore (Preferences)
+#######################################
+-keep class androidx.datastore.** { *; }
+-dontwarn androidx.datastore.**
+
+#######################################
+# Media3 (ExoPlayer)
+#######################################
+-keep class androidx.media3.** { *; }
+-dontwarn androidx.media3.**
+
+#######################################
+# Navigation-Compose
+#######################################
+-keep class androidx.navigation.** { *; }
+-dontwarn androidx.navigation.**
+
+#######################################
+# Coil (이미지 로딩)
+#######################################
+-keep class coil.** { *; }
+-dontwarn coil.**
+-dontwarn coil3.**
+-dontwarn okhttp3.**
+
+#######################################
+# Paging
+#######################################
+-keep class androidx.paging.** { *; }
+-dontwarn androidx.paging.**
+
+# PagingSource 난독화 방지
+# PagingSource 난독화 방지
+-keep class * extends androidx.paging.PagingSource { *; }
+-keepclassmembers class * extends androidx.paging.PagingSource {
+    *;
+}
+-keepattributes SourceFile, LineNumberTable
+
+# JamendoPagingSource 개별 보호
+-keep class com.sumi.flowplay.data.paging.JamendoPagingSource { *; }
+
+# Jamendo API DTO 보호
+-keep class com.sumi.flowplay.data.model.JamendoTrackResponse { *; }
+-keep class com.sumi.flowplay.data.model.JamendoTrack { *; }
+
+#######################################
+# Kotlin Reflection & Compose
+#######################################
+-keepclassmembers class kotlin.Metadata { *; }
+-keep class androidx.compose.** { *; }
+-keep class androidx.activity.compose.** { *; }
+-keep class androidx.lifecycle.** { *; }
+-dontwarn kotlin.**
+-dontwarn androidx.compose.**
+-dontwarn androidx.lifecycle.**
+
+#######################################
+# AndroidX & Support
+#######################################
+-dontwarn android.support.**
+-dontwarn androidx.**
+
+#######################################
+# Kotlinx Serialization
+#######################################
+-keep class kotlinx.serialization.** { *; }
+-dontwarn kotlinx.serialization.**
+
+#######################################
+# 일반 설정
+#######################################
+# 로그 제거 (릴리즈용, 필요 시 주석)
+-assumenosideeffects class android.util.Log {
+    public static *** v(...);
+    public static *** d(...);
+    public static *** i(...);
+}
+
+# 리소스 이름, BuildConfig 등 유지
+-keep class **.BuildConfig { *; }
+-keep class **.R$* { *; }
