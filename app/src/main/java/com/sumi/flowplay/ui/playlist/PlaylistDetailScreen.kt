@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -31,10 +30,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,15 +59,15 @@ fun PlaylistDetailScreen(
 
     if (playlist == null) return
 
-    var selectionMode by remember { mutableStateOf(false) }
-    val selectedTracks = remember { mutableStateMapOf<Long, Boolean>() }
-
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(playlist!!.name) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        playlistViewModel.updateDeleteTrackMode(false)
+                        onBack()
+                    }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
@@ -80,20 +75,20 @@ fun PlaylistDetailScreen(
                     }
                 },
                 actions = {
-                    if (selectionMode) {
+                    if (playlistViewModel.deleteTrackMode) {
                         TextButton(onClick = {
                             // 체크된 트랙 삭제
-                            val toDelete = selectedTracks.filter { it.value }.keys
+                            val toDelete = playlistViewModel.deletedTracks.filter { it.value }.keys
                             toDelete.forEach { trackId ->
                                 tracks.find { it.id == trackId }?.let { playlistViewModel.deleteTrackFromPlaylist(playlistId, it) }
                             }
-                            selectedTracks.clear()
-                            selectionMode = false
+                            playlistViewModel.clearSelectionTracks()
+                            playlistViewModel.updateDeleteTrackMode(false)
                         }) {
                             Text(stringResource(R.string.complete))
                         }
                     } else {
-                        TextButton(onClick = { selectionMode = true }) {
+                        TextButton(onClick = { playlistViewModel.updateDeleteTrackMode(true) }) {
                             Text(stringResource(R.string.delete))
                         }
                     }
@@ -122,15 +117,15 @@ fun PlaylistDetailScreen(
             ) {
                 items(tracks) { track ->
                     val isCurrentTrack = currentTrack?.id == track.id
-                    val isSelected = selectedTracks[track.id] ?: false
+                    val isSelected = playlistViewModel.deletedTracks[track.id] ?: false
 
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 3.dp)
                             .clickable {
-                                if (selectionMode) {
-                                    selectedTracks[track.id] = !(selectedTracks[track.id] ?: false)
+                                if (playlistViewModel.deleteTrackMode) {
+                                    playlistViewModel.deletedTracks[track.id] = !(playlistViewModel.deletedTracks[track.id] ?: false)
                                 } else {
                                     onTrackClick(track, tracks)
                                 }
@@ -183,11 +178,11 @@ fun PlaylistDetailScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            if (selectionMode) {
+                            if (playlistViewModel.deleteTrackMode) {
                                 Checkbox(
                                     modifier = Modifier.padding(5.dp).size(20.dp),
                                     checked = isSelected,
-                                    onCheckedChange = { selectedTracks[track.id] = it }
+                                    onCheckedChange = { playlistViewModel.deletedTracks[track.id] = it }
                                 )
                             }
                         }

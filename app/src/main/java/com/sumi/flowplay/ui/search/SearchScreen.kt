@@ -122,9 +122,7 @@ fun SearchScreen(
                 ),
                 keyboardActions = KeyboardActions(
                     onSearch = {
-                        if (text.isNotEmpty()) {
-                            searchViewModel.search()
-                        }
+                        searchViewModel.search()
                         focusManager.clearFocus()
                         searchViewModel.setSearching(false)
                     }
@@ -133,7 +131,8 @@ fun SearchScreen(
                     if (text.isNotEmpty()) {
                         IconButton(
                             onClick = {
-                                searchViewModel.clearQuery()
+                                tfValue = TextFieldValue("", selection = TextRange("".length))
+                                searchViewModel.onTextChanged("")
                                 if (!isSearching) {
                                     focusRequester.requestFocus()
                                     searchViewModel.setSearching(true)

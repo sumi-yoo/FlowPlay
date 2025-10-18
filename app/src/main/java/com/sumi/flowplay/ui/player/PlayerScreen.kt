@@ -1,5 +1,6 @@
 package com.sumi.flowplay.ui.player
 
+import android.content.res.Configuration
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -56,8 +57,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,6 +78,9 @@ fun PlayerScreen(
     onAddToPlaylist: () -> Unit,
     onBack: () -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     val favoritesPlaylistId = stringResource(R.string.favorites_playlist_name).hashCode().toLong() // 좋아요 플레이리스트 Id
     val currentTrack by playerViewModel.currentTrack.collectAsState()
     val favoriteTracks by playlistViewModel.getTracksOfPlaylist(favoritesPlaylistId).collectAsState(initial = emptyList())
@@ -107,143 +112,293 @@ fun PlayerScreen(
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(30.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Image(
-                painter = rememberAsyncImagePainter(currentTrack!!.artworkUrl),
-                contentDescription = currentTrack!!.name,
+        if (isLandscape) {
+            Row(
                 modifier = Modifier
-                    .size(250.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(currentTrack!!.name, fontWeight = FontWeight.Bold, fontSize = 24.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-            Text(currentTrack!!.artistName, fontSize = 18.sp, color = Color.Gray, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            CustomProgressBar(
-                currentPosition = currentPosition,
-                duration = duration,
-                onSeek = { pos -> playerViewModel.seekTo(pos) }
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(end = 30.dp, start = 20.dp, bottom = 20.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(formatTime(currentPosition))
-                Text(formatTime(duration))
-            }
+                // 좌측: 앨범 이미지
+                Image(
+                    painter = rememberAsyncImagePainter(currentTrack!!.artworkUrl),
+                    contentDescription = currentTrack!!.name,
+                    modifier = Modifier
+                        .size(250.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
+                )
 
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                IconButton(onClick = { playerViewModel.toggleShuffle() }) {
-                    Icon(
-                        if (isShuffleMode) Icons.Filled.ShuffleOn else Icons.Filled.Shuffle,
-                        contentDescription = "Shuffle",
-                        modifier = Modifier
-                            .padding(0.dp)
-                            .size(24.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { playerViewModel.skipPrevious() }) {
-                    Icon(
-                        Icons.Default.SkipPrevious,
-                        contentDescription = "Previous",
-                        modifier = Modifier
-                            .padding(0.dp)
-                            .size(48.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { playerViewModel.togglePlayPause() }) {
-                    Icon(
-                        if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "Play/Pause",
-                        modifier = Modifier
-                            .padding(0.dp)
-                            .size(48.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { playerViewModel.skipNext() }) {
-                    Icon(
-                        Icons.Default.SkipNext,
-                        contentDescription = "Next",
-                        modifier = Modifier
-                            .padding(0.dp)
-                            .size(48.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { playerViewModel.toggleRepeat() }) {
-                    Icon(
-                        if (repeatMode == 1) {
-                            Icons.Filled.RepeatOn
-                        } else if (repeatMode == 2) {
-                            Icons.Filled.RepeatOneOn
-                        } else {
-                            Icons.Filled.Repeat
-                        },
-                        contentDescription = "Repeat",
-                        modifier = Modifier
-                            .padding(0.dp)
-                            .size(24.dp)
-                    )
-                }
-            }
+                Spacer(modifier = Modifier.width(24.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // 왼쪽: 좋아요 버튼
-                IconButton(
-                    onClick = {
-                        if (isFavorite) {
-                            playlistViewModel.deleteTrackFromPlaylist(
-                                favoritesPlaylistId,
-                                currentTrack!!
+                // 우측: 트랙 정보 + 컨트롤
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = currentTrack!!.name,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 24.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = currentTrack!!.artistName,
+                            fontSize = 18.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        CustomProgressBar(
+                            currentPosition = currentPosition,
+                            duration = duration,
+                            onSeek = { pos -> playerViewModel.seekTo(pos) }
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(formatTime(currentPosition))
+                            Text(formatTime(duration))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 재생 컨트롤
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        IconButton(onClick = { playerViewModel.toggleShuffle() }) {
+                            Icon(
+                                if (isShuffleMode) Icons.Filled.ShuffleOn else Icons.Filled.Shuffle,
+                                contentDescription = "Shuffle"
                             )
-                        } else {
-                            playlistViewModel.addTrackToPlaylist(
-                                favoritesPlaylistId,
-                                currentTrack!!
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(onClick = { playerViewModel.skipPrevious() }) {
+                            Icon(Icons.Default.SkipPrevious, contentDescription = "Previous", modifier = Modifier.size(48.dp))
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(onClick = { playerViewModel.togglePlayPause() }) {
+                            Icon(
+                                if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = "Play/Pause",
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(onClick = { playerViewModel.skipNext() }) {
+                            Icon(Icons.Default.SkipNext, contentDescription = "Next", modifier = Modifier.size(48.dp))
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(onClick = { playerViewModel.toggleRepeat() }) {
+                            Icon(
+                                when (repeatMode) {
+                                    1 -> Icons.Filled.RepeatOn
+                                    2 -> Icons.Filled.RepeatOneOn
+                                    else -> Icons.Filled.Repeat
+                                },
+                                contentDescription = "Repeat"
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 좋아요 + 플레이리스트 추가
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        val favoritesPlaylistId = stringResource(R.string.favorites_playlist_name).hashCode().toLong()
+                        val favoriteTracks by playlistViewModel.getTracksOfPlaylist(favoritesPlaylistId).collectAsState(initial = emptyList())
+                        val isFavorite = remember(currentTrack, favoriteTracks) {
+                            favoriteTracks.any { it.id == currentTrack?.id }
+                        }
+
+                        IconButton(
+                            onClick = {
+                                if (isFavorite) {
+                                    playlistViewModel.deleteTrackFromPlaylist(favoritesPlaylistId, currentTrack!!)
+                                } else {
+                                    playlistViewModel.addTrackToPlaylist(favoritesPlaylistId, currentTrack!!)
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Favorite",
+                                tint = if (isFavorite) Color.Red else Color.Gray
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(onClick = { onAddToPlaylist() }) {
+                            Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = "Add to Playlist")
+                        }
+                    }
+                }
+            }
+
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(30.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(currentTrack!!.artworkUrl),
+                    contentDescription = currentTrack!!.name,
+                    modifier = Modifier
+                        .size(250.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    currentTrack!!.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    currentTrack!!.artistName,
+                    fontSize = 18.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                CustomProgressBar(
+                    currentPosition = currentPosition,
+                    duration = duration,
+                    onSeek = { pos -> playerViewModel.seekTo(pos) }
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        modifier = Modifier.padding(0.dp),
-                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = if (isFavorite) "좋아요 해제" else "좋아요",
-                        tint = if (isFavorite) Color.Red else Color.Gray
-                    )
+                    Text(formatTime(currentPosition))
+                    Text(formatTime(duration))
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
-
-                // 오른쪽: 플레이리스트 추가 버튼
-                IconButton(
-                    onClick = { onAddToPlaylist() }
+                Row(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.QueueMusic,
-                        contentDescription = "Add to Playlist",
-                        modifier = Modifier
-                            .padding(0.dp)
-                            .size(28.dp)
-                    )
+                    IconButton(onClick = { playerViewModel.toggleShuffle() }) {
+                        Icon(
+                            if (isShuffleMode) Icons.Filled.ShuffleOn else Icons.Filled.Shuffle,
+                            contentDescription = "Shuffle",
+                            modifier = Modifier
+                                .padding(0.dp)
+                                .size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { playerViewModel.skipPrevious() }) {
+                        Icon(
+                            Icons.Default.SkipPrevious,
+                            contentDescription = "Previous",
+                            modifier = Modifier
+                                .padding(0.dp)
+                                .size(48.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { playerViewModel.togglePlayPause() }) {
+                        Icon(
+                            if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = "Play/Pause",
+                            modifier = Modifier
+                                .padding(0.dp)
+                                .size(48.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { playerViewModel.skipNext() }) {
+                        Icon(
+                            Icons.Default.SkipNext,
+                            contentDescription = "Next",
+                            modifier = Modifier
+                                .padding(0.dp)
+                                .size(48.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { playerViewModel.toggleRepeat() }) {
+                        Icon(
+                            if (repeatMode == 1) {
+                                Icons.Filled.RepeatOn
+                            } else if (repeatMode == 2) {
+                                Icons.Filled.RepeatOneOn
+                            } else {
+                                Icons.Filled.Repeat
+                            },
+                            contentDescription = "Repeat",
+                            modifier = Modifier
+                                .padding(0.dp)
+                                .size(24.dp)
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // 왼쪽: 좋아요 버튼
+                    IconButton(
+                        onClick = {
+                            if (isFavorite) {
+                                playlistViewModel.deleteTrackFromPlaylist(
+                                    favoritesPlaylistId,
+                                    currentTrack!!
+                                )
+                            } else {
+                                playlistViewModel.addTrackToPlaylist(
+                                    favoritesPlaylistId,
+                                    currentTrack!!
+                                )
+                            }
+                        }
+                    ) {
+                        Icon(
+                            modifier = Modifier.padding(0.dp),
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (isFavorite) "좋아요 해제" else "좋아요",
+                            tint = if (isFavorite) Color.Red else Color.Gray
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // 오른쪽: 플레이리스트 추가 버튼
+                    IconButton(
+                        onClick = { onAddToPlaylist() }
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.QueueMusic,
+                            contentDescription = "Add to Playlist",
+                            modifier = Modifier
+                                .padding(0.dp)
+                                .size(28.dp)
+                        )
+                    }
                 }
             }
         }

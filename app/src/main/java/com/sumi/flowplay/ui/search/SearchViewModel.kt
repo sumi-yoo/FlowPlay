@@ -64,12 +64,8 @@ class SearchViewViewModel @Inject constructor(
     fun search() {
         viewModelScope.launch {
             _query.emit(_text.value)
-            searchDataStore.addSearch(_text.value)
+            if (_text.value.isNotEmpty()) searchDataStore.addSearch(_text.value)
         }
-    }
-
-    fun clearQuery() {
-        _text.value = ""
     }
 
     fun setSearching(value: Boolean) {

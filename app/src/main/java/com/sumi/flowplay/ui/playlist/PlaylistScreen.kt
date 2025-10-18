@@ -1,6 +1,5 @@
 package com.sumi.flowplay.ui.playlist
 
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,11 +34,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,11 +58,12 @@ fun PlaylistScreen(
     onPlaylistClick: (Long) -> Unit
 ) {
     val playlists by playlistViewModel.playlists.collectAsState()
-    val isDeleteMode by playlistViewModel.isDeleteMode.collectAsState()
+    val isDeleteMode by playlistViewModel.deletePlayListMode.collectAsState()
+    val favoritesName = stringResource(R.string.favorites_playlist_name)
 
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var newPlaylistName by remember { mutableStateOf("") }
-    val selectedPlaylists = remember { mutableStateMapOf<Long, Boolean>() }
+    LaunchedEffect(Unit) {
+        playlistViewModel.setFavoritesId(favoritesName)
+    }
 
     Scaffold(
         topBar = {
@@ -71,15 +72,15 @@ fun PlaylistScreen(
                 actions = {
                     if (isDeleteMode) {
                         TextButton(onClick = {
-                            val idsToDelete = selectedPlaylists.filterValues { it }.keys
+                            val idsToDelete = playlistViewModel.deletedPlaylists.filterValues { it }.keys
                             playlistViewModel.deletePlaylists(idsToDelete.toList())
-                            selectedPlaylists.clear()
-                            playlistViewModel.toggleDeleteMode()
+                            playlistViewModel.clearSelectionPlaylists()
+                            playlistViewModel.toggleDeletePlayListMode()
                         }) {
                             Text(stringResource(R.string.complete))
                         }
                     } else {
-                        var expanded by remember { mutableStateOf(false) }
+                        var expanded by rememberSaveable { mutableStateOf(false) }
 
                         Box {
                             IconButton(onClick = { expanded = true }) {
@@ -98,14 +99,15 @@ fun PlaylistScreen(
                                     text = { Text(stringResource(R.string.add)) },
                                     onClick = {
                                         expanded = false
-                                        showCreateDialog = true
+                                        playlistViewModel.updateShowCreateDialog(true)
                                     }
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.delete)) },
                                     onClick = {
                                         expanded = false
-                                        playlistViewModel.toggleDeleteMode()
+                                        playlistViewModel.clearSelectionPlaylists()
+                                        playlistViewModel.toggleDeletePlayListMode()
                                     }
                                 )
                             }
@@ -134,7 +136,7 @@ fun PlaylistScreen(
             } else {
                 LazyColumn {
                     items(playlists) { playlist ->
-                        val checked = selectedPlaylists[playlist.id] ?: false
+                        val checked = playlistViewModel.deletedPlaylists[playlist.id] ?: false
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -182,12 +184,12 @@ fun PlaylistScreen(
                                     )
                                 }
 
-                                if (isDeleteMode && playlist.id != -1L) {
+                                if (isDeleteMode && playlist.id != favoritesName.hashCode().toLong()) {
                                     Checkbox(
                                         modifier = Modifier.padding(5.dp).size(20.dp),
                                         checked = checked,
                                         onCheckedChange = {
-                                            selectedPlaylists[playlist.id] = it
+                                            playlistViewModel.deletedPlaylists[playlist.id] = it
                                         }
                                     )
                                 } else {
@@ -205,18 +207,18 @@ fun PlaylistScreen(
     }
 
     // 새 플레이리스트 생성 다이얼로그
-    if (showCreateDialog) {
-        var showError by remember { mutableStateOf(false) }
+    if (playlistViewModel.showCreateDialog) {
+        var showError by rememberSaveable { mutableStateOf(false) }
 
         AlertDialog(
-            onDismissRequest = { showCreateDialog = false },
+            onDismissRequest = { playlistViewModel.updateShowCreateDialog(false) },
             title = { Text(stringResource(R.string.new_playlist_dialog_title)) },
             text = {
                 Column {
                     TextField(
-                        value = newPlaylistName,
+                        value = playlistViewModel.newPlaylistName,
                         onValueChange = {
-                            newPlaylistName = it
+                            playlistViewModel.updateNewPlaylistName(it)
                             showError = false
                         },
                         label = { Text(stringResource(R.string.playlist_name_label)) },
@@ -233,12 +235,12 @@ fun PlaylistScreen(
                 }
             },
             confirmButton = {
-                val existing = playlists.any { it.name == newPlaylistName }
+                val existing = playlists.any { it.name == playlistViewModel.newPlaylistName }
                 TextButton(onClick = {
-                    if (newPlaylistName.isNotBlank() && !existing) {
-                        playlistViewModel.addPlaylist(newPlaylistName)
-                        newPlaylistName = ""
-                        showCreateDialog = false
+                    if (playlistViewModel.newPlaylistName.isNotBlank() && !existing) {
+                        playlistViewModel.addPlaylist(playlistViewModel.newPlaylistName)
+                        playlistViewModel.updateNewPlaylistName("")
+                        playlistViewModel.updateShowCreateDialog(false)
                     } else {
                         showError = true
                     }
@@ -247,7 +249,10 @@ fun PlaylistScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showCreateDialog = false }) {
+                TextButton(onClick = {
+                    playlistViewModel.updateNewPlaylistName("")
+                    playlistViewModel.updateShowCreateDialog(false)
+                }) {
                     Text(stringResource(R.string.cancel))
                 }
             }

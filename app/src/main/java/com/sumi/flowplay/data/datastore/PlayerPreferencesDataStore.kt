@@ -15,20 +15,20 @@ class PlayerPreferencesDataStore @Inject constructor(
     private val SHUFFLE_KEY = booleanPreferencesKey("shuffle_mode")
     private val REPEAT_KEY = intPreferencesKey("repeat_mode")
 
-    val shuffleMode: Flow<Boolean> = context.searchDataStore.data
+    val shuffleMode: Flow<Boolean> = context.playerDataStore.data
         .map { prefs -> prefs[SHUFFLE_KEY] ?: false }
 
-    val repeatMode: Flow<Int> = context.searchDataStore.data
+    val repeatMode: Flow<Int> = context.playerDataStore.data
         .map { prefs -> prefs[REPEAT_KEY] ?: 0 }
 
     suspend fun setShuffleMode(mode: Boolean) {
-        context.searchDataStore.edit { prefs ->
+        context.playerDataStore.edit { prefs ->
             prefs[SHUFFLE_KEY] = mode
         }
     }
 
     suspend fun setRepeatMode(mode: Int) {
-        context.searchDataStore.edit { prefs ->
+        context.playerDataStore.edit { prefs ->
             prefs[REPEAT_KEY] = mode
         }
     }

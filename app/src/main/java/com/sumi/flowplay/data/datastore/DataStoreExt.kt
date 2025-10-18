@@ -7,3 +7,4 @@ import androidx.datastore.preferences.preferencesDataStore
 
 // Context 확장으로 DataStore 싱글톤
 val Context.searchDataStore: DataStore<Preferences> by preferencesDataStore(name = "search_prefs")
+val Context.playerDataStore: DataStore<Preferences> by preferencesDataStore(name = "player_prefs")

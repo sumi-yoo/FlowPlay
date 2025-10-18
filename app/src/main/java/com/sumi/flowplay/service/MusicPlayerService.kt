@@ -127,6 +127,8 @@ class MusicPlayerService : Service() {
             playerPrefs.shuffleMode.collect { value ->
                 _isShuffleMode.value = value
             }
+        }
+        serviceScope.launch {
             playerPrefs.repeatMode.collect { value ->
                 _repeatMode.value = value
             }

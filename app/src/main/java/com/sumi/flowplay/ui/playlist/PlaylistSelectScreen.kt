@@ -40,7 +40,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.sumi.flowplay.R
@@ -55,18 +55,16 @@ fun PlaylistSelectScreen(
 ) {
     val playlists by playlistViewModel.playlists.collectAsState()
     val currentTrack by playerViewModel.currentTrack.collectAsState()
-
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var newPlaylistName by remember { mutableStateOf("") }
-
-    // 선택 상태: playlistId -> Boolean
-    val selectedPlaylists = remember { mutableStateMapOf<Long, Boolean>() }
+    var initialized by rememberSaveable { mutableStateOf(false) }
 
     // 체크 상태 초기화
     LaunchedEffect(playlists, currentTrack) {
-        playlists.forEach { playlist ->
-            val alreadyIn = currentTrack?.let { playlistViewModel.isTrackInPlaylist(playlist.id, it.id) } ?: false
-            selectedPlaylists[playlist.id] = alreadyIn
+        if (!initialized) {
+            playlists.forEach { playlist ->
+                val alreadyIn = currentTrack?.let { playlistViewModel.isTrackInPlaylist(playlist.id, it.id) } ?: false
+                playlistViewModel.selectedPlaylists[playlist.id] = alreadyIn
+            }
+            initialized = true
         }
     }
 
@@ -82,7 +80,7 @@ fun PlaylistSelectScreen(
                 actions = {
                     TextButton(onClick = {
                         currentTrack?.let { track ->
-                            val (selected, unselected) = selectedPlaylists.entries.partition { it.value }
+                            val (selected, unselected) = playlistViewModel.selectedPlaylists.entries.partition { it.value }
 
                             // 체크된 플레이리스트 → 추가
                             selected.forEach { (playlistId, _) ->
@@ -95,6 +93,7 @@ fun PlaylistSelectScreen(
                             }
                         }
                         onBack()
+                        playlistViewModel.clearSelectedPlaylists()
                     }) {
                         Text(stringResource(R.string.complete))
                     }
@@ -127,12 +126,12 @@ fun PlaylistSelectScreen(
                 }
 
                 items(playlists) { playlist ->
-                    val checked = selectedPlaylists[playlist.id] ?: false
+                    val checked = playlistViewModel.selectedPlaylists[playlist.id] ?: false
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                selectedPlaylists[playlist.id] = !(selectedPlaylists[playlist.id] ?: false)
+                                playlistViewModel.selectedPlaylists[playlist.id] = !(playlistViewModel.selectedPlaylists[playlist.id] ?: false)
                             },
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -163,7 +162,7 @@ fun PlaylistSelectScreen(
                             Checkbox(
                                 modifier = Modifier.padding(5.dp).size(20.dp),
                                 checked = checked,
-                                onCheckedChange = { selectedPlaylists[playlist.id] = it }
+                                onCheckedChange = { playlistViewModel.selectedPlaylists[playlist.id] = it }
                             )
                         }
                     }
@@ -174,7 +173,7 @@ fun PlaylistSelectScreen(
             item {
                 Spacer(Modifier.height(20.dp))
                 Button(
-                    onClick = { showCreateDialog = true },
+                    onClick = { playlistViewModel.updateShowCreateDialog(true) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.create_new_playlist))
@@ -184,18 +183,18 @@ fun PlaylistSelectScreen(
     }
 
     // 새 플레이리스트 생성 다이얼로그
-    if (showCreateDialog) {
-        var showError by remember { mutableStateOf(false) }
+    if (playlistViewModel.showCreateDialog) {
+        var showError by rememberSaveable { mutableStateOf(false) }
 
         AlertDialog(
-            onDismissRequest = { showCreateDialog = false },
+            onDismissRequest = { playlistViewModel.updateShowCreateDialog(false) },
             title = { Text(stringResource(R.string.new_playlist_dialog_title)) },
             text = {
                 Column {
                     TextField(
-                        value = newPlaylistName,
+                        value = playlistViewModel.newPlaylistName,
                         onValueChange = {
-                            newPlaylistName = it
+                            playlistViewModel.updateNewPlaylistName(it)
                             showError = false
                         },
                         label = { Text(stringResource(R.string.playlist_name_label)) },
@@ -212,12 +211,12 @@ fun PlaylistSelectScreen(
                 }
             },
             confirmButton = {
-                val existing = playlists.any { it.name == newPlaylistName }
+                val existing = playlists.any { it.name == playlistViewModel.newPlaylistName }
                 TextButton(onClick = {
-                    if (newPlaylistName.isNotBlank() && !existing) {
-                        playlistViewModel.addPlaylist(newPlaylistName)
-                        newPlaylistName = ""
-                        showCreateDialog = false
+                    if (playlistViewModel.newPlaylistName.isNotBlank() && !existing) {
+                        playlistViewModel.addPlaylist(playlistViewModel.newPlaylistName)
+                        playlistViewModel.updateNewPlaylistName("")
+                        playlistViewModel.updateShowCreateDialog(false)
                     } else {
                         showError = true
                     }
@@ -226,7 +225,10 @@ fun PlaylistSelectScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showCreateDialog = false }) {
+                TextButton(onClick = {
+                    playlistViewModel.updateNewPlaylistName("")
+                    playlistViewModel.updateShowCreateDialog(false) }
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
