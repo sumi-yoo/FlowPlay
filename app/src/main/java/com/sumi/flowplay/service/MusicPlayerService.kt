@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.os.Binder
 import android.os.Build
@@ -259,7 +260,7 @@ class MusicPlayerService : Service() {
         )
 
         val notification = NotificationCompat.Builder(this@MusicPlayerService, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_noti_flow_play)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(track.name)
             .setContentText(track.artistName)
             .setContentIntent(contentIntent)

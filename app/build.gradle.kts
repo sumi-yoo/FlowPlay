@@ -116,6 +116,7 @@ dependencies {
     implementation("androidx.media:media:1.6.0")
     // serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
 }
 
 kapt {

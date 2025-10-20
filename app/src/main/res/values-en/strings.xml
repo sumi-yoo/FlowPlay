@@ -16,6 +16,7 @@
     <string name="playlist_track_count">%1$d songs</string>
     <string name="playlist_not_found">Playlist not found.</string>
     <string name="no_tracks_in_playlist">No tracks in this playlist.</string>
+    <string name="playlist_name_empty">Please enter a name.</string>
     <string name="search_title">Search</string>
     <string name="favorites_playlist_name">❤</string>
     <string name="playlist_name_exists">Name already exists.</string>

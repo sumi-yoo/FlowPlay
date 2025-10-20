@@ -190,6 +190,7 @@ fun PlaylistSelectScreen(
     // 새 플레이리스트 생성 다이얼로그
     if (playlistViewModel.showCreateDialog) {
         var showError by rememberSaveable { mutableStateOf(false) }
+        var showEmpty by rememberSaveable { mutableStateOf(false) }
 
         AlertDialog(
             onDismissRequest = { playlistViewModel.updateShowCreateDialog(false) },
@@ -201,10 +202,19 @@ fun PlaylistSelectScreen(
                         onValueChange = {
                             playlistViewModel.updateNewPlaylistName(it)
                             showError = false
+                            showEmpty = false
                         },
                         label = { Text(stringResource(R.string.playlist_name_label)) },
                         singleLine = true
                     )
+                    if (showEmpty) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.playlist_name_empty), // 예: "플레이리스트 이름을 입력해주세요"
+                            color = Color.Red,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                     if (showError) {
                         Spacer(Modifier.height(4.dp))
                         Text(
@@ -218,12 +228,25 @@ fun PlaylistSelectScreen(
             confirmButton = {
                 val existing = playlists.any { it.name == playlistViewModel.newPlaylistName.trim() }
                 TextButton(onClick = {
-                    if (playlistViewModel.newPlaylistName.isNotBlank() && !existing) {
-                        playlistViewModel.addPlaylist(playlistViewModel.newPlaylistName)
-                        playlistViewModel.updateNewPlaylistName("")
-                        playlistViewModel.updateShowCreateDialog(false)
-                    } else {
-                        showError = true
+                    when {
+                        // 입력이 아예 없을 때
+                        playlistViewModel.newPlaylistName.isBlank() -> {
+                            showEmpty = true
+                            showError = false
+                        }
+                        // 입력은 됐는데 이미 존재할 때
+                        existing -> {
+                            showEmpty = false
+                            showError = true
+                        }
+                        // 입력도 됐고 존재하지 않을 때 (정상 케이스)
+                        else -> {
+                            playlistViewModel.addPlaylist(playlistViewModel.newPlaylistName)
+                            playlistViewModel.updateNewPlaylistName("")
+                            playlistViewModel.updateShowCreateDialog(false)
+                            showEmpty = false
+                            showError = false
+                        }
                     }
                 }) {
                     Text(stringResource(R.string.create))

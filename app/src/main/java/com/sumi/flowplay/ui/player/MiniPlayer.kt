@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,6 +30,7 @@ import coil.compose.AsyncImage
 
 @Composable
 fun MiniPlayer(
+    isHomeScreen: Boolean,
     viewModel: PlayerViewModel,
     onClick: () -> Unit
 ) {
@@ -39,7 +41,10 @@ fun MiniPlayer(
         Surface(
             modifier = Modifier
                 .clickable { onClick() }
-                .padding(8.dp),
+                .padding(8.dp)
+                .then(
+                    if (!isHomeScreen) Modifier.navigationBarsPadding() else Modifier
+                ),
             tonalElevation = 4.dp,
             shape = RoundedCornerShape(12.dp)
         ) {

@@ -10,10 +10,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Search
@@ -51,6 +52,7 @@ import com.sumi.flowplay.ui.playlist.PlaylistSelectScreen
 import com.sumi.flowplay.ui.playlist.PlaylistViewModel
 import com.sumi.flowplay.ui.search.SearchScreen
 import com.sumi.flowplay.ui.search.SearchViewViewModel
+import com.sumi.flowplay.ui.theme.MusicAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -90,8 +92,8 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            MaterialTheme {
-                val navController = rememberNavController() // Activity 멤버 변수 초기
+            MusicAppTheme {
+                val navController = rememberNavController()
                 MainScreen(navController, playerViewModel)
                 LaunchedEffect(navigateToPlayer) {
                     if (navigateToPlayer) {
@@ -147,18 +149,24 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding(),
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding(),
         bottomBar = {
             // BottomNavigation + MiniPlayer 숨김
             if (currentDestination != "player" && currentDestination != "playlistSelect") {
                 Column {
-                    MiniPlayer(playerViewModel) {
+                    val isHomeScreen = currentDestination != "playlistDetail/{playlistId}"
+
+                    MiniPlayer(
+                        viewModel = playerViewModel,
+                        isHomeScreen = isHomeScreen
+                    ) {
                         // 클릭 시 PlayerScreen으로 전환
                         navController.navigate("player") {
                             launchSingleTop = true
                         }
                     }
-                    if (currentDestination != "playlistDetail/{playlistId}") {
+                    if (isHomeScreen) {
                         BottomNavigationBar(navController)
                     }
                 }
