@@ -30,7 +30,6 @@ import coil.compose.AsyncImage
 
 @Composable
 fun MiniPlayer(
-    isHomeScreen: Boolean,
     viewModel: PlayerViewModel,
     onClick: () -> Unit
 ) {
@@ -41,10 +40,7 @@ fun MiniPlayer(
         Surface(
             modifier = Modifier
                 .clickable { onClick() }
-                .padding(8.dp)
-                .then(
-                    if (!isHomeScreen) Modifier.navigationBarsPadding() else Modifier
-                ),
+                .padding(8.dp),
             tonalElevation = 4.dp,
             shape = RoundedCornerShape(12.dp)
         ) {

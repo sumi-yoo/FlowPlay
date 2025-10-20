@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Search
@@ -149,17 +150,14 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding(),
+            .systemBarsPadding(),
         bottomBar = {
             // BottomNavigation + MiniPlayer 숨김
             if (currentDestination != "player" && currentDestination != "playlistSelect") {
                 Column {
                     val isHomeScreen = currentDestination != "playlistDetail/{playlistId}"
 
-                    MiniPlayer(
-                        viewModel = playerViewModel,
-                        isHomeScreen = isHomeScreen
-                    ) {
+                    MiniPlayer(viewModel = playerViewModel) {
                         // 클릭 시 PlayerScreen으로 전환
                         navController.navigate("player") {
                             launchSingleTop = true
