@@ -7,6 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
@@ -24,15 +25,22 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple500,
-    onPrimary = LightText,
-    secondary = Teal200,
-    onSecondary = LightText,
-    background = DarkBg,
-    onBackground = LightText,
-    surface = DarkBg,
-    onSurface = LightText
+private val LightColors = lightColorScheme(
+    background = LightBackground,
+    surface = LightSurface,
+    onBackground = LightOnBackground,
+    onSurface = LightOnSurface,
+    primary = LightProgressActive,
+    secondary = LightThumb
+)
+
+private val DarkColors = darkColorScheme(
+    background = DarkBackground,
+    surface = DarkSurface,
+    onBackground = DarkOnBackground,
+    onSurface = DarkOnSurface,
+    primary = DarkProgressActive,
+    secondary = DarkThumb
 )
 
 @Composable
@@ -40,26 +48,17 @@ fun MusicAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val colorScheme = if (darkTheme) DarkColors else LightColors
     val systemUiController = rememberSystemUiController()
 
-    if (darkTheme) {
-        SideEffect {
-            // 상태바 색상 (배경과 동일하게)
-            systemUiController.setStatusBarColor(
-                color = colorScheme.background,
-                darkIcons = false
-            )
-            // 하단 내비게이션 바 색상 (배경과 동일하게)
-            systemUiController.setNavigationBarColor(
-                color = colorScheme.background,
-                darkIcons = false
-            )
-        }
+    val barColor = Color(0xFF0A0A0A).copy(alpha = 0.92f) // 아주 어두운 블랙 계열
+    SideEffect {
+        systemUiController.setStatusBarColor(barColor, darkIcons = false)
+        systemUiController.setNavigationBarColor(barColor, darkIcons = false)
     }
 
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
+        colorScheme = if (darkTheme) DarkColors else LightColors,
         typography = Typography,
         content = content
     )

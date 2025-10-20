@@ -117,6 +117,7 @@ dependencies {
     // serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+    implementation("androidx.palette:palette-ktx:1.0.0")
 }
 
 kapt {
