@@ -23,7 +23,7 @@
 -keepattributes *Annotation*
 
 # DTO 및 Response 모델 유지
--keep class com.sumi.flowplay.data.model.** { *; }
+-keep class com.sumi.jamplay.data.model.** { *; }
 
 #######################################
 # Hilt (Dagger)
@@ -81,11 +81,11 @@
 -keepattributes SourceFile, LineNumberTable
 
 # JamendoPagingSource 개별 보호
--keep class com.sumi.flowplay.data.paging.JamendoPagingSource { *; }
+-keep class com.sumi.jamplay.data.paging.JamendoPagingSource { *; }
 
 # Jamendo API DTO 보호
--keep class com.sumi.flowplay.data.model.JamendoTrackResponse { *; }
--keep class com.sumi.flowplay.data.model.JamendoTrack { *; }
+-keep class com.sumi.jamplay.data.model.JamendoTrackResponse { *; }
+-keep class com.sumi.jamplay.data.model.JamendoTrack { *; }
 
 #######################################
 # Kotlin Reflection & Compose

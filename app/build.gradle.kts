@@ -15,7 +15,7 @@ plugins {
 }
 
 android {
-    namespace = "com.sumi.flowplay"
+    namespace = "com.sumi.jamplay"
     compileSdk = 36
 
     signingConfigs {
@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.sumi.flowplay"
+        applicationId = "com.sumi.jamplay"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FlowPlay</string>
+    <string name="app_name">JamPlay</string>
     <string name="playlist_add_title">Add to Playlist</string>
     <string name="back">Back</string>
     <string name="complete">Complete</string>
