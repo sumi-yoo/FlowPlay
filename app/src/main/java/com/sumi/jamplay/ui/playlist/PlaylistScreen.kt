@@ -1,8 +1,11 @@
 package com.sumi.jamplay.ui.playlist
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,15 +27,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -50,9 +50,9 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sumi.jamplay.R
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistScreen(
+    padding: PaddingValues,
     playlistViewModel: PlaylistViewModel,
     onPlaylistClick: (Long) -> Unit
 ) {
@@ -64,139 +64,151 @@ fun PlaylistScreen(
         playlistViewModel.setFavoritesId(favoritesName)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.playlist_title)) },
-                actions = {
-                    if (isDeleteMode) {
-                        TextButton(onClick = {
-                            val idsToDelete = playlistViewModel.deletedPlaylists.filterValues { it }.keys
-                            playlistViewModel.deletePlaylists(idsToDelete.toList())
-                            playlistViewModel.clearSelectionPlaylists()
-                            playlistViewModel.toggleDeletePlayListMode()
-                        }) {
-                            Text(stringResource(R.string.complete))
-                        }
-                    } else {
-                        var expanded by rememberSaveable { mutableStateOf(false) }
-
-                        Box {
-                            IconButton(onClick = { expanded = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "더보기"
-                                )
-                            }
-
-                            DropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false },
-                                offset = DpOffset(x = (-5).dp, y = 0.dp) // 왼쪽으로 5dp 이동
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.add)) },
-                                    onClick = {
-                                        expanded = false
-                                        playlistViewModel.updateShowCreateDialog(true)
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.delete)) },
-                                    onClick = {
-                                        expanded = false
-                                        playlistViewModel.clearSelectionPlaylists()
-                                        playlistViewModel.toggleDeletePlayListMode()
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
+    Column(
+        modifier = Modifier.run {
+            fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(padding)
                 .padding(horizontal = 16.dp)
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            if (playlists.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.no_playlists),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+            Text(
+                text = stringResource(R.string.playlist_title),
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            if (isDeleteMode) {
+                TextButton(onClick = {
+                    val idsToDelete =
+                        playlistViewModel.deletedPlaylists.filterValues { it }.keys
+                    playlistViewModel.deletePlaylists(idsToDelete.toList())
+                    playlistViewModel.clearSelectionPlaylists()
+                    playlistViewModel.toggleDeletePlayListMode()
+                }) {
+                    Text(stringResource(R.string.complete))
                 }
             } else {
-                LazyColumn {
-                    items(playlists) { playlist ->
-                        val checked = playlistViewModel.deletedPlaylists[playlist.id] ?: false
-                        Card(
+                var expanded by rememberSaveable { mutableStateOf(false) }
+
+                Box {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "더보기"
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        offset = DpOffset(x = (-5).dp, y = 0.dp)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.add)) },
+                            onClick = {
+                                expanded = false
+                                playlistViewModel.updateShowCreateDialog(true)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.delete)) },
+                            onClick = {
+                                expanded = false
+                                playlistViewModel.clearSelectionPlaylists()
+                                playlistViewModel.toggleDeletePlayListMode()
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        if (playlists.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.no_playlists),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        } else {
+            LazyColumn {
+                items(playlists) { playlist ->
+                    val checked = playlistViewModel.deletedPlaylists[playlist.id] ?: false
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                            .clickable(enabled = !isDeleteMode) {
+                                if (!isDeleteMode) onPlaylistClick(playlist.id)
+                            },
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp)
-                                .clickable(enabled = !isDeleteMode) {
-                                    if (!isDeleteMode) onPlaylistClick(playlist.id)
-                                },
-                            shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                .padding(16.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .padding(16.dp)
-                                    .fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                if (playlist.tracks.isEmpty()) {
-                                    Icon(
-                                        Icons.AutoMirrored.Filled.QueueMusic,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(40.dp)
-                                    )
-                                } else {
-                                    AsyncImage(
-                                        model = playlist.tracks.first().artworkUrl,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(40.dp).clip(RoundedCornerShape(4.dp))
-                                    )
-                                }
+                            if (playlist.tracks.isEmpty()) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.QueueMusic,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                            } else {
+                                AsyncImage(
+                                    model = playlist.tracks.first().artworkUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                )
+                            }
 
-                                Spacer(Modifier.width(12.dp))
+                            Spacer(Modifier.width(12.dp))
 
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = playlist.name,
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Text(
-                                        text = stringResource(
-                                            R.string.playlist_track_count,
-                                            playlist.tracks.size
-                                        ),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = playlist.name,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = stringResource(
+                                        R.string.playlist_track_count,
+                                        playlist.tracks.size
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
 
-                                if (isDeleteMode && playlist.id != favoritesName.hashCode().toLong()) {
-                                    Checkbox(
-                                        modifier = Modifier.padding(5.dp).size(20.dp),
-                                        checked = checked,
-                                        onCheckedChange = {
-                                            playlistViewModel.deletedPlaylists[playlist.id] = it
-                                        }
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                        contentDescription = null
-                                    )
-                                }
+                            if (isDeleteMode && playlist.id != favoritesName.hashCode().toLong()) {
+                                Checkbox(
+                                    modifier = Modifier
+                                        .padding(5.dp)
+                                        .size(20.dp),
+                                    checked = checked,
+                                    onCheckedChange = {
+                                        playlistViewModel.deletedPlaylists[playlist.id] = it
+                                    }
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = null
+                                )
                             }
                         }
                     }
@@ -228,7 +240,7 @@ fun PlaylistScreen(
                     if (showEmpty) {
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = stringResource(R.string.playlist_name_empty), // 예: "플레이리스트 이름을 입력해주세요"
+                            text = stringResource(R.string.playlist_name_empty),
                             color = Color.Red,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -236,7 +248,7 @@ fun PlaylistScreen(
                     if (showError) {
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = stringResource(R.string.playlist_name_exists), // "이미 존재하는 이름입니다" 같은 문자열
+                            text = stringResource(R.string.playlist_name_exists),
                             color = Color.Red,
                             style = MaterialTheme.typography.bodySmall
                         )

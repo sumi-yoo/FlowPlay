@@ -151,217 +151,73 @@ fun PlayerScreen(
         )
 
         // 상단 앱바
-        Scaffold(
-            containerColor = Color.Transparent,
-            topBar = {
-                TopAppBar(
-                    title = { Text("") },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.back),
-                                tint = contentColor
-                            )
-                        }
-                    }
-                )
-            }
-        ) { innerPadding ->
-
-            if (isLandscape) {
-                // 가로 레이아웃
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(end = 30.dp, start = 20.dp, bottom = 20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // 좌: 앨범 이미지
-                    AlbumArtwork(currentTrack!!.artworkUrl)
-
-                    Spacer(modifier = Modifier.width(24.dp))
-
-                    // 우: 트랙 정보 + 컨트롤
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = currentTrack!!.name,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 24.sp,
-                                textAlign = TextAlign.Center,
-                                color = contentColor
-                            )
-                            Text(
-                                text = currentTrack!!.artistName,
-                                fontSize = 18.sp,
-                                color = contentColor.copy(alpha = 0.7f),
-                                textAlign = TextAlign.Center
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            CustomProgressBar(
-                                currentPosition = currentPosition,
-                                duration = duration,
-                                onSeek = { pos -> playerViewModel.seekTo(pos) },
-                                activeColor = contentColor,
-                                inactiveColor = contentColor.copy(alpha = 0.3f),
-                                thumbColor = contentColor
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(formatTime(currentPosition), color = contentColor)
-                                Text(formatTime(duration), color = contentColor)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // 재생 컨트롤
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            IconButton(onClick = { playerViewModel.toggleShuffle() }) {
-                                Icon(
-                                    if (isShuffleMode) Icons.Filled.ShuffleOn else Icons.Filled.Shuffle,
-                                    contentDescription = "Shuffle",
-                                    tint = contentColor
-                                )
-                            }
-                            Spacer(modifier = Modifier.weight(1f))
-                            IconButton(onClick = { playerViewModel.skipPrevious() }) {
-                                Icon(
-                                    Icons.Default.SkipPrevious,
-                                    contentDescription = "Previous",
-                                    modifier = Modifier.size(48.dp),
-                                    tint = contentColor
-                                )
-                            }
-                            Spacer(modifier = Modifier.weight(1f))
-                            IconButton(onClick = { playerViewModel.togglePlayPause() }) {
-                                Icon(
-                                    if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                    contentDescription = "Play/Pause",
-                                    modifier = Modifier.size(48.dp),
-                                    tint = contentColor
-                                )
-                            }
-                            Spacer(modifier = Modifier.weight(1f))
-                            IconButton(onClick = { playerViewModel.skipNext() }) {
-                                Icon(
-                                    Icons.Default.SkipNext,
-                                    contentDescription = "Next",
-                                    modifier = Modifier.size(48.dp),
-                                    tint = contentColor
-                                )
-                            }
-                            Spacer(modifier = Modifier.weight(1f))
-                            IconButton(onClick = { playerViewModel.toggleRepeat() }) {
-                                Icon(
-                                    when (repeatMode) {
-                                        1 -> Icons.Filled.RepeatOn
-                                        2 -> Icons.Filled.RepeatOneOn
-                                        else -> Icons.Filled.Repeat
-                                    },
-                                    contentDescription = "Repeat",
-                                    tint = contentColor
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // 좋아요 + 플레이리스트
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    if (isFavorite) {
-                                        playlistViewModel.deleteTrackFromPlaylist(favoritesPlaylistId, currentTrack!!)
-                                    } else {
-                                        playlistViewModel.addTrackToPlaylist(favoritesPlaylistId, currentTrack!!)
-                                    }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Favorite,
-                                    contentDescription = "Favorite",
-                                    tint = if (isFavorite) Color.Red else Color.White
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.weight(1f))
-                            IconButton(onClick = { onAddToPlaylist() }) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.QueueMusic,
-                                    contentDescription = "Add to Playlist",
-                                    tint = contentColor
-                                )
-                            }
-                        }
-                    }
+        TopAppBar(
+            title = { Text("") },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.back),
+                        tint = contentColor
+                    )
                 }
+            }
+        )
 
-            } else {
-                // 세로 레이아웃
+        if (isLandscape) {
+            // 가로 레이아웃
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(end = 30.dp, start = 20.dp, bottom = 20.dp, top = 64.dp), // 상단 앱바 여백
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AlbumArtwork(currentTrack!!.artworkUrl)
+                Spacer(modifier = Modifier.width(24.dp))
+                // 우측 컨트롤
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(30.dp),
+                    modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    AlbumArtwork(currentTrack!!.artworkUrl)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = currentTrack!!.name,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 24.sp,
+                            textAlign = TextAlign.Center,
+                            color = contentColor
+                        )
+                        Text(
+                            text = currentTrack!!.artistName,
+                            fontSize = 18.sp,
+                            color = contentColor.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Center
+                        )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        currentTrack!!.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        color = contentColor
-                    )
-                    Text(
-                        currentTrack!!.artistName,
-                        fontSize = 18.sp,
-                        color = contentColor.copy(alpha = 0.7f),
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
+                        CustomProgressBar(
+                            currentPosition = currentPosition,
+                            duration = duration,
+                            onSeek = { pos -> playerViewModel.seekTo(pos) },
+                            activeColor = contentColor,
+                            inactiveColor = contentColor.copy(alpha = 0.3f),
+                            thumbColor = contentColor
+                        )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    CustomProgressBar(
-                        currentPosition = currentPosition,
-                        duration = duration,
-                        onSeek = { pos -> playerViewModel.seekTo(pos) },
-                        activeColor = contentColor,
-                        inactiveColor = contentColor.copy(alpha = 0.3f),
-                        thumbColor = contentColor
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(formatTime(currentPosition), color = contentColor)
-                        Text(formatTime(duration), color = contentColor)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(formatTime(currentPosition), color = contentColor)
+                            Text(formatTime(duration), color = contentColor)
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // 재생 컨트롤
                     Row(modifier = Modifier.fillMaxWidth()) {
@@ -369,9 +225,6 @@ fun PlayerScreen(
                             Icon(
                                 if (isShuffleMode) Icons.Filled.ShuffleOn else Icons.Filled.Shuffle,
                                 contentDescription = "Shuffle",
-                                modifier = Modifier
-                                    .padding(0.dp)
-                                    .size(24.dp),
                                 tint = contentColor
                             )
                         }
@@ -380,9 +233,7 @@ fun PlayerScreen(
                             Icon(
                                 Icons.Default.SkipPrevious,
                                 contentDescription = "Previous",
-                                modifier = Modifier
-                                    .padding(0.dp)
-                                    .size(48.dp),
+                                modifier = Modifier.size(48.dp),
                                 tint = contentColor
                             )
                         }
@@ -391,9 +242,7 @@ fun PlayerScreen(
                             Icon(
                                 if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                 contentDescription = "Play/Pause",
-                                modifier = Modifier
-                                    .padding(0.dp)
-                                    .size(48.dp),
+                                modifier = Modifier.size(48.dp),
                                 tint = contentColor
                             )
                         }
@@ -402,29 +251,31 @@ fun PlayerScreen(
                             Icon(
                                 Icons.Default.SkipNext,
                                 contentDescription = "Next",
-                                modifier = Modifier
-                                    .padding(0.dp)
-                                    .size(48.dp),
+                                modifier = Modifier.size(48.dp),
                                 tint = contentColor
                             )
                         }
                         Spacer(modifier = Modifier.weight(1f))
                         IconButton(onClick = { playerViewModel.toggleRepeat() }) {
                             Icon(
-                                if (repeatMode == 1) Icons.Filled.RepeatOn
-                                else if (repeatMode == 2) Icons.Filled.RepeatOneOn
-                                else Icons.Filled.Repeat,
+                                when (repeatMode) {
+                                    1 -> Icons.Filled.RepeatOn
+                                    2 -> Icons.Filled.RepeatOneOn
+                                    else -> Icons.Filled.Repeat
+                                },
                                 contentDescription = "Repeat",
-                                modifier = Modifier
-                                    .padding(0.dp)
-                                    .size(24.dp),
                                 tint = contentColor
                             )
                         }
                     }
 
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        // 좋아요
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 좋아요 + 플레이리스트
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
                         IconButton(
                             onClick = {
                                 if (isFavorite) {
@@ -442,17 +293,141 @@ fun PlayerScreen(
                         }
 
                         Spacer(modifier = Modifier.weight(1f))
-
                         IconButton(onClick = { onAddToPlaylist() }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.QueueMusic,
                                 contentDescription = "Add to Playlist",
-                                modifier = Modifier
-                                    .padding(0.dp)
-                                    .size(28.dp),
                                 tint = contentColor
                             )
                         }
+                    }
+                }
+            }
+
+        } else {
+            // 세로 레이아웃
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(30.dp)
+                    .padding(top = 64.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                AlbumArtwork(currentTrack!!.artworkUrl)
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    currentTrack!!.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    color = contentColor
+                )
+                Text(
+                    currentTrack!!.artistName,
+                    fontSize = 18.sp,
+                    color = contentColor.copy(alpha = 0.7f),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                CustomProgressBar(
+                    currentPosition = currentPosition,
+                    duration = duration,
+                    onSeek = { pos -> playerViewModel.seekTo(pos) },
+                    activeColor = contentColor,
+                    inactiveColor = contentColor.copy(alpha = 0.3f),
+                    thumbColor = contentColor
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(formatTime(currentPosition), color = contentColor)
+                    Text(formatTime(duration), color = contentColor)
+                }
+
+                // 재생 컨트롤
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    IconButton(onClick = { playerViewModel.toggleShuffle() }) {
+                        Icon(
+                            if (isShuffleMode) Icons.Filled.ShuffleOn else Icons.Filled.Shuffle,
+                            contentDescription = "Shuffle",
+                            modifier = Modifier.size(24.dp),
+                            tint = contentColor
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { playerViewModel.skipPrevious() }) {
+                        Icon(
+                            Icons.Default.SkipPrevious,
+                            contentDescription = "Previous",
+                            modifier = Modifier.size(48.dp),
+                            tint = contentColor
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { playerViewModel.togglePlayPause() }) {
+                        Icon(
+                            if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = "Play/Pause",
+                            modifier = Modifier.size(48.dp),
+                            tint = contentColor
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { playerViewModel.skipNext() }) {
+                        Icon(
+                            Icons.Default.SkipNext,
+                            contentDescription = "Next",
+                            modifier = Modifier.size(48.dp),
+                            tint = contentColor
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { playerViewModel.toggleRepeat() }) {
+                        Icon(
+                            if (repeatMode == 1) Icons.Filled.RepeatOn
+                            else if (repeatMode == 2) Icons.Filled.RepeatOneOn
+                            else Icons.Filled.Repeat,
+                            contentDescription = "Repeat",
+                            modifier = Modifier.size(24.dp),
+                            tint = contentColor
+                        )
+                    }
+                }
+
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    IconButton(
+                        onClick = {
+                            if (isFavorite) {
+                                playlistViewModel.deleteTrackFromPlaylist(favoritesPlaylistId, currentTrack!!)
+                            } else {
+                                playlistViewModel.addTrackToPlaylist(favoritesPlaylistId, currentTrack!!)
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Favorite,
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) Color.Red else Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    IconButton(onClick = { onAddToPlaylist() }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.QueueMusic,
+                            contentDescription = "Add to Playlist",
+                            modifier = Modifier.size(28.dp),
+                            tint = contentColor
+                        )
                     }
                 }
             }

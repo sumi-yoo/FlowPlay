@@ -3,6 +3,7 @@ package com.sumi.jamplay.ui.playlist
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,9 +47,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.sumi.jamplay.R
 import com.sumi.jamplay.ui.player.PlayerViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistSelectScreen(
+    padding: PaddingValues,
     playlistViewModel: PlaylistViewModel,
     playerViewModel: PlayerViewModel,
     onBack: () -> Unit
@@ -68,49 +69,58 @@ fun PlaylistSelectScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(
-                    text = stringResource(R.string.playlist_add_title),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                ) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.back)
+                )
+            }
+
+            Text(
+                text = stringResource(R.string.playlist_add_title),
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+
+            TextButton(onClick = {
+                currentTrack?.let { track ->
+                    val (selected, unselected) = playlistViewModel.selectedPlaylists.entries.partition { it.value }
+
+                    // 체크된 플레이리스트 → 추가
+                    selected.forEach { (playlistId, _) ->
+                        playlistViewModel.addTrackToPlaylist(playlistId, track)
                     }
-                },
-                actions = {
-                    TextButton(onClick = {
-                        currentTrack?.let { track ->
-                            val (selected, unselected) = playlistViewModel.selectedPlaylists.entries.partition { it.value }
 
-                            // 체크된 플레이리스트 → 추가
-                            selected.forEach { (playlistId, _) ->
-                                playlistViewModel.addTrackToPlaylist(playlistId, track)
-                            }
-
-                            // 체크 해제된 플레이리스트 → 삭제
-                            unselected.forEach { (playlistId, _) ->
-                                playlistViewModel.deleteTrackFromPlaylist(playlistId, track)
-                            }
-                        }
-                        onBack()
-                        playlistViewModel.clearSelectedPlaylists()
-                    }) {
-                        Text(stringResource(R.string.complete))
+                    // 체크 해제된 플레이리스트 → 삭제
+                    unselected.forEach { (playlistId, _) ->
+                        playlistViewModel.deleteTrackFromPlaylist(playlistId, track)
                     }
                 }
-            )
+                onBack()
+                playlistViewModel.clearSelectedPlaylists()
+            }) {
+                Text(stringResource(R.string.complete))
+            }
         }
-    ) { innerPadding ->
+
+        Spacer(modifier = Modifier.padding(4.dp))
+
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxSize().padding(end = 16.dp, start = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             if (playlists.isEmpty()) {
                 item {
@@ -157,16 +167,22 @@ fun PlaylistSelectScreen(
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    text = stringResource(R.string.playlist_track_count, playlist.tracks.size),
+                                    text = stringResource(
+                                        R.string.playlist_track_count,
+                                        playlist.tracks.size
+                                    ),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            Spacer(modifier = Modifier.weight(1f))
                             Checkbox(
-                                modifier = Modifier.padding(5.dp).size(20.dp),
+                                modifier = Modifier
+                                    .padding(5.dp)
+                                    .size(20.dp),
                                 checked = checked,
-                                onCheckedChange = { playlistViewModel.selectedPlaylists[playlist.id] = it }
+                                onCheckedChange = {
+                                    playlistViewModel.selectedPlaylists[playlist.id] = it
+                                }
                             )
                         }
                     }
@@ -209,7 +225,7 @@ fun PlaylistSelectScreen(
                     if (showEmpty) {
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = stringResource(R.string.playlist_name_empty), // 예: "플레이리스트 이름을 입력해주세요"
+                            text = stringResource(R.string.playlist_name_empty),
                             color = Color.Red,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -217,7 +233,7 @@ fun PlaylistSelectScreen(
                     if (showError) {
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = stringResource(R.string.playlist_name_exists), // "이미 존재하는 이름입니다" 같은 문자열
+                            text = stringResource(R.string.playlist_name_exists),
                             color = Color.Red,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -254,8 +270,8 @@ fun PlaylistSelectScreen(
             dismissButton = {
                 TextButton(onClick = {
                     playlistViewModel.updateNewPlaylistName("")
-                    playlistViewModel.updateShowCreateDialog(false) }
-                ) {
+                    playlistViewModel.updateShowCreateDialog(false)
+                }) {
                     Text(stringResource(R.string.cancel))
                 }
             }

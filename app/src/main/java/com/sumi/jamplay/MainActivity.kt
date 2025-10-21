@@ -7,15 +7,13 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Search
@@ -29,6 +27,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -90,7 +90,15 @@ class MainActivity : ComponentActivity() {
             startService(intent)
         }
 
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(
+                Color.Transparent.toArgb(), Color.Transparent.toArgb()
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                Color.Transparent.toArgb(), Color.Transparent.toArgb()
+            )
+        )
+
         setContent {
             MusicAppTheme {
                 val navController = rememberNavController()
@@ -147,10 +155,7 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
     val currentDestination = navBackStackEntry?.destination?.route
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .systemBarsPadding(),
+        modifier = Modifier.fillMaxSize(),
         bottomBar = {
             // BottomNavigation + MiniPlayer 숨김
             if (currentDestination != "player" && currentDestination != "playlistSelect") {
@@ -173,10 +178,11 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
         NavHost(
             navController = navController,
             startDestination = "playlist",
-            modifier = Modifier.padding(padding)
+            modifier = Modifier.background(Color.Transparent)
         ) {
             composable("playlist") {
                 PlaylistScreen(
+                    padding = padding,
                     playlistViewModel = playlistViewModel,
                     onPlaylistClick = { playlistId ->
                         navController.navigate("playlistDetail/$playlistId")
@@ -185,6 +191,7 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
             }
             composable("search") {
                 SearchScreen(
+                    padding = padding,
                     searchViewModel = searchViewModel,
                     playerViewModel = playerViewModel,
                     onTrackClick = { track, trackList ->
@@ -203,6 +210,7 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
             }
             composable("playlistSelect") {
                 PlaylistSelectScreen(
+                    padding = padding,
                     playlistViewModel = playlistViewModel,
                     playerViewModel = playerViewModel,
                     onBack = { navController.popBackStack() }
@@ -219,6 +227,7 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
                 }
 
                 PlaylistDetailScreen(
+                    padding = padding,
                     playlistId = playlistId,
                     playlistViewModel = playlistViewModel,
                     playerViewModel = playerViewModel,
@@ -242,7 +251,10 @@ fun BottomNavigationBar(navController: NavController) {
         BottomNavItem(stringResource(R.string.search_title), "search", Icons.Default.Search),
     )
 
-    NavigationBar {
+    NavigationBar(
+//        containerColor = Color.Transparent,
+//        tonalElevation = 0.dp
+    ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination?.route
 

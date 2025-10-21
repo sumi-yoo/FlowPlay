@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -67,6 +68,7 @@ import kotlinx.coroutines.flow.drop
 
 @Composable
 fun SearchScreen(
+    padding: PaddingValues,
     searchViewModel: SearchViewViewModel,
     playerViewModel: PlayerViewModel,
     onTrackClick: (Track, List<Track>) -> Unit
@@ -101,8 +103,10 @@ fun SearchScreen(
         focusManager.clearFocus()
     }
 
-    Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-        Column {
+    Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
             OutlinedTextField(
                 value = tfValue,
                 onValueChange = {
