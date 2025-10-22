@@ -202,6 +202,7 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
             }
             composable("player") {
                 PlayerScreen(
+                    padding = padding,
                     playerViewModel = playerViewModel,
                     playlistViewModel = playlistViewModel,
                     onAddToPlaylist = { navController.navigate("playlistSelect") },

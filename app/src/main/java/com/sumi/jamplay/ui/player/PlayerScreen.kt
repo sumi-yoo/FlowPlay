@@ -18,6 +18,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -86,9 +87,9 @@ import com.sumi.jamplay.ui.playlist.PlaylistViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerScreen(
+    padding: PaddingValues,
     playerViewModel: PlayerViewModel,
     playlistViewModel: PlaylistViewModel,
     onAddToPlaylist: () -> Unit,
@@ -135,7 +136,7 @@ fun PlayerScreen(
     val contentColor = Color.White
 
     // 배경 + 오버레이
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(
@@ -143,34 +144,36 @@ fun PlayerScreen(
                     colors = listOf(vibrantColor, lightVibrantColor)
                 )
             )
+            .background(Color.Black.copy(alpha = 0.4f))
+            .padding(padding)
     ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(Color.Black.copy(alpha = 0.35f))
-        )
-
         // 상단 앱바
-        TopAppBar(
-            title = { Text("") },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.back),
-                        tint = contentColor
-                    )
-                }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.back),
+                    tint = contentColor
+                )
             }
-        )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "",
+                color = contentColor,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
 
         if (isLandscape) {
             // 가로 레이아웃
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(end = 30.dp, start = 20.dp, bottom = 20.dp, top = 64.dp), // 상단 앱바 여백
+                    .padding(end = 30.dp, start = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AlbumArtwork(currentTrack!!.artworkUrl)
@@ -309,8 +312,7 @@ fun PlayerScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(30.dp)
-                    .padding(top = 64.dp),
+                    .padding(30.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
