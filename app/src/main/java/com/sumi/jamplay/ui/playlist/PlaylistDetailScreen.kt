@@ -1,6 +1,9 @@
 package com.sumi.jamplay.ui.playlist
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,8 +48,9 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.sumi.jamplay.R
 import com.sumi.jamplay.data.model.Track
-import com.sumi.jamplay.ui.player.PlayerViewModel
 import com.sumi.jamplay.ui.player.PlayingWave
+import com.sumi.jamplay.ui.player.PlayerViewModel
+import com.sumi.jamplay.ui.theme.JamPlayPurple
 
 @Composable
 fun PlaylistDetailScreen(
@@ -71,7 +77,7 @@ fun PlaylistDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(padding)
+            .systemBarsPadding()
     ) {
         // 상단 앱바
         Row(
@@ -178,7 +184,7 @@ fun PlaylistDetailScreen(
                                     Box(
                                         modifier = Modifier
                                             .matchParentSize()
-                                            .background(Color.Black.copy(alpha = 0.6f))
+                                            .background(Color.Black.copy(alpha = 0.7f))
                                     )
                                     // 재생중 표시
                                     PlayingWave(
@@ -187,20 +193,25 @@ fun PlaylistDetailScreen(
                                         barWidth = 3.dp,
                                         barMaxHeight = 24.dp,
                                         barMinHeight = 6.dp,
-                                        color = Color.White,
                                         modifier = Modifier.align(Alignment.Center)
                                     )
                                 }
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Column(modifier = Modifier.weight(1f)) {
+                                val animatedColor by animateColorAsState(
+                                    targetValue = if (isCurrentTrack) JamPlayPurple else Color.White,
+                                    animationSpec = tween(durationMillis = 400, easing = LinearOutSlowInEasing)
+                                )
+
                                 Text(
                                     text = track.name,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color.White,
+                                    color = animatedColor,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = if (isCurrentTrack) Modifier.shadow(8.dp, spotColor = JamPlayPurple.copy(alpha = 0.8f)) else Modifier
                                 )
                                 Text(
                                     text = track.artistName,

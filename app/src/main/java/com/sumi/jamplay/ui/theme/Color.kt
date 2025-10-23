@@ -29,3 +29,6 @@ val JamPlayOnBackground = Color(0xFFEDEDED)    // 본문 텍스트
 val JamPlayOnSurface = Color(0xFFCCCCCC)       // 보조 텍스트
 val JamPlayPurple = Color(0xFF7A4FFF)          // 포인트 컬러
 val JamPlayPurpleLight = Color(0xFF9C7BFF)     // 강조 상태
+val JamPlayPurpleBright = Color(0xFF9E6CFF) // 아이콘용
+val JamPlayVividPurple = Color(0xFF9B5CFF)  // 밝고 쨍한 보라 (추천)
+val JamPlayAccent = Color(0xFFB470FF)       // 네온감 있는 강조색

@@ -46,7 +46,7 @@ fun MiniPlayer(
         Surface(
             modifier = modifier
                 .clickable { onClick() }
-                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .padding(8.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(
                     Brush.horizontalGradient(listOf(vibrantColor, lightVibrantColor))

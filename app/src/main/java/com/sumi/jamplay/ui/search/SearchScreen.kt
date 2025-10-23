@@ -1,6 +1,9 @@
 package com.sumi.jamplay.ui.search
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -66,8 +70,9 @@ import com.sumi.jamplay.data.model.Track
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import com.sumi.jamplay.R
-import com.sumi.jamplay.ui.player.PlayerViewModel
 import com.sumi.jamplay.ui.player.PlayingWave
+import com.sumi.jamplay.ui.player.PlayerViewModel
+import com.sumi.jamplay.ui.theme.JamPlayPurple
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.drop
 
@@ -270,7 +275,7 @@ fun TrackItem(track: Track?, isCurrentTrack: Boolean, isPlaying: Boolean,onClick
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .background(Color.Black.copy(alpha = 0.6f))
+                        .background(Color.Black.copy(alpha = 0.7f))
                 )
                 // 재생중 표시
                 PlayingWave(
@@ -279,7 +284,6 @@ fun TrackItem(track: Track?, isCurrentTrack: Boolean, isPlaying: Boolean,onClick
                     barWidth = 3.dp,
                     barMaxHeight = 24.dp,
                     barMinHeight = 6.dp,
-                    color = Color.White,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
@@ -289,13 +293,19 @@ fun TrackItem(track: Track?, isCurrentTrack: Boolean, isPlaying: Boolean,onClick
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.Center
         ) {
+            val animatedColor by animateColorAsState(
+                targetValue = if (isCurrentTrack) JamPlayPurple else Color.White,
+                animationSpec = tween(durationMillis = 400, easing = LinearOutSlowInEasing)
+            )
+
             Text(
                 text = track?.name ?: "",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color.White,
+                color = animatedColor,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = if (isCurrentTrack) Modifier.shadow(8.dp, spotColor = JamPlayPurple.copy(alpha = 0.8f)) else Modifier
             )
             Text(
                 text = track?.artistName ?: "",

@@ -27,7 +27,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -41,17 +43,12 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.ShuffleOn
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -81,10 +79,10 @@ import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.sumi.jamplay.R
 import com.sumi.jamplay.ui.playlist.PlaylistViewModel
 import com.sumi.jamplay.ui.theme.JamPlayPurple
+import com.sumi.jamplay.ui.theme.JamPlayPurpleBright
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -179,16 +177,17 @@ fun PlayerScreen(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(30.dp),
+                    .padding(end = 20.dp, start = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AlbumArtwork(currentTrack!!.artworkUrl)
                 Spacer(modifier = Modifier.width(24.dp))
                 // 우측 컨트롤
                 Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
@@ -297,7 +296,7 @@ fun PlayerScreen(
                             Icon(
                                 imageVector = Icons.Filled.Favorite,
                                 contentDescription = "Favorite",
-                                tint = if (isFavorite) JamPlayPurple else Color.White
+                                tint = if (isFavorite) JamPlayPurpleBright else Color.White
                             )
                         }
 
@@ -318,7 +317,8 @@ fun PlayerScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(30.dp),
+                    .padding(30.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
@@ -423,7 +423,7 @@ fun PlayerScreen(
                         Icon(
                             imageVector = Icons.Filled.Favorite,
                             contentDescription = "Favorite",
-                            tint = if (isFavorite) JamPlayPurple else Color.White
+                            tint = if (isFavorite) JamPlayPurpleBright else Color.White
                         )
                     }
 
@@ -580,10 +580,10 @@ fun PlayingWave(
     isPlaying: Boolean,
     barCount: Int = 5,
     barWidth: Dp = 4.dp,
-    barMaxHeight: Dp = 24.dp,
+    barMaxHeight: Dp = 28.dp,
     barMinHeight: Dp = 6.dp,
     barSpacing: Dp = 2.dp,
-    color: Color = Color.Green
+    glowColor: Color = JamPlayPurple
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(barSpacing),
@@ -591,29 +591,38 @@ fun PlayingWave(
         modifier = modifier.height(barMaxHeight)
     ) {
         repeat(barCount) { index ->
-            var lastHeight by remember { mutableStateOf(barMinHeight.value) }
-
-            val infiniteTransition = rememberInfiniteTransition()
+            val infiniteTransition = rememberInfiniteTransition(label = "wave")
             val animatedHeight by infiniteTransition.animateFloat(
                 initialValue = barMinHeight.value,
                 targetValue = barMaxHeight.value,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(
-                        durationMillis = 400 + index * 100,
-                        easing = LinearEasing
-                    ),
+                    animation = tween(durationMillis = 400 + index * 100, easing = LinearEasing),
                     repeatMode = RepeatMode.Reverse
-                )
+                ),
+                label = "heightAnim"
             )
 
-            val height = if (isPlaying) animatedHeight else lastHeight
-            lastHeight = height
+            val height = if (isPlaying) animatedHeight else barMinHeight.value
+
+            val brush = Brush.verticalGradient(
+                colors = listOf(
+                    glowColor.copy(alpha = 1f),
+                    glowColor.copy(alpha = 0.9f)
+                )
+            )
 
             Box(
                 modifier = Modifier
                     .width(barWidth)
                     .height(height.dp)
-                    .background(color, shape = RoundedCornerShape(50))
+                    .shadow(
+                        elevation = 18.dp,
+                        shape = RoundedCornerShape(50),
+                        ambientColor = glowColor.copy(alpha = 0.9f),
+                        spotColor = glowColor.copy(alpha = 0.9f),
+                        clip = false
+                    )
+                    .background(brush, shape = RoundedCornerShape(50))
             )
         }
     }
