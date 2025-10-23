@@ -1,11 +1,11 @@
 package com.sumi.jamplay.ui.player
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,9 +23,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
 @Composable
@@ -36,12 +39,20 @@ fun MiniPlayer(
 ) {
     val currentTrack by viewModel.currentTrack.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
+    val vibrantColor by viewModel.vibrantColor.collectAsState()
+    val lightVibrantColor by viewModel.lightVibrantColor.collectAsState()
 
     if (currentTrack != null) {
         Surface(
             modifier = modifier
                 .clickable { onClick() }
-                .padding(8.dp),
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    Brush.horizontalGradient(listOf(vibrantColor, lightVibrantColor))
+                )
+                .background(Color.Black.copy(alpha = 0.4f)),
+            color = Color.Transparent,
             tonalElevation = 4.dp,
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -60,12 +71,18 @@ fun MiniPlayer(
                 Column(Modifier.weight(1f)) {
                     Text(
                         text = currentTrack?.name ?: "",
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+
                     Text(
                         text = currentTrack?.artistName ?: "",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.White.copy(alpha = 0.6f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )

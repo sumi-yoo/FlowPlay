@@ -23,10 +23,9 @@ val LightProgressActive = Color(0xFF222222)
 val LightThumb = Color(0xFF000000)
 
 // 🌙 Dark
-val DarkBackground = Color(0xFF000000)
-val DarkSurface = Color(0xFF1E1E1E)
-val DarkOnBackground = Color(0xFFEDEDED)
-val DarkOnSurface = Color(0xFFCCCCCC)
-val DarkProgressInactive = Color(0xFF3A3A3A)
-val DarkProgressActive = Color(0xFFEDEDED)
-val DarkThumb = Color(0xFFFFFFFF)
+val JamPlayBackground = Color(0xFF000000)      // 완전 블랙, 다크테마 배경
+val JamPlaySurface = Color(0xFF1A1A1A)         // 카드, 팝업, 다이얼로그 배경
+val JamPlayOnBackground = Color(0xFFEDEDED)    // 본문 텍스트
+val JamPlayOnSurface = Color(0xFFCCCCCC)       // 보조 텍스트
+val JamPlayPurple = Color(0xFF7A4FFF)          // 포인트 컬러
+val JamPlayPurpleLight = Color(0xFF9C7BFF)     // 강조 상태

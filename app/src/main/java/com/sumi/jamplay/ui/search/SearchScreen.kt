@@ -32,6 +32,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,6 +57,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.paging.LoadState
 import coil.compose.AsyncImage
 import com.sumi.jamplay.data.model.Track
@@ -86,6 +90,21 @@ fun SearchScreen(
         mutableStateOf(TextFieldValue(searchViewModel.text.value))
     }
     val isSearching by searchViewModel.isSearching.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 화면 라이프사이클 기반 클릭 제어
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> searchViewModel.enableClicks()
+                Lifecycle.Event.ON_PAUSE,
+                Lifecycle.Event.ON_STOP -> searchViewModel.disableClicks()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(focusStateFlow) {
         if (isSearching && !focusStateFlow.value) {
@@ -211,6 +230,8 @@ fun SearchScreen(
                                         isCurrentTrack = currentTrack?.id == track.id,
                                         isPlaying = isPlaying
                                     ) {
+                                        if (!searchViewModel.acceptsClicks) return@TrackItem
+
                                         val currentTrackList = (0 until tracks.itemCount)
                                             .mapNotNull { index -> tracks.peek(index) }
                                         onTrackClick(it, currentTrackList)
@@ -270,12 +291,17 @@ fun TrackItem(track: Track?, isCurrentTrack: Boolean, isPlaying: Boolean,onClick
         ) {
             Text(
                 text = track?.name ?: "",
-                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = track?.artistName ?: "",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color.White.copy(alpha = 0.6f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

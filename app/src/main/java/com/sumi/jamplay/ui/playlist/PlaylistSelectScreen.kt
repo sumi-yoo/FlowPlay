@@ -19,9 +19,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,10 +81,15 @@ fun PlaylistSelectScreen(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(48.dp)
+            ) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back)
+                    imageVector = Icons.Filled.ChevronLeft,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
                 )
             }
 
@@ -147,7 +153,11 @@ fun PlaylistSelectScreen(
                             .clickable {
                                 playlistViewModel.selectedPlaylists[playlist.id] = !(playlistViewModel.selectedPlaylists[playlist.id] ?: false)
                             },
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        colors = CardDefaults.cardColors(
+                            contentColor = Color.White          // 내부 Text, Icon 색 기본값
+                        )
                     ) {
                         Row(
                             modifier = Modifier
@@ -164,7 +174,8 @@ fun PlaylistSelectScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = playlist.name,
-                                    style = MaterialTheme.typography.titleMedium
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
                                     text = stringResource(
@@ -172,7 +183,7 @@ fun PlaylistSelectScreen(
                                         playlist.tracks.size
                                     ),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = Color.White.copy(alpha = 0.8f)
                                 )
                             }
                             Checkbox(

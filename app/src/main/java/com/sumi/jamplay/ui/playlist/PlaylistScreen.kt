@@ -158,7 +158,10 @@ fun PlaylistScreen(
                                 if (!isDeleteMode) onPlaylistClick(playlist.id)
                             },
                         shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        colors = CardDefaults.cardColors(
+                            contentColor = Color.White          // 내부 Text, Icon 색 기본값
+                        )
                     ) {
                         Row(
                             modifier = Modifier
@@ -187,7 +190,8 @@ fun PlaylistScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = playlist.name,
-                                    style = MaterialTheme.typography.titleMedium
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
                                     text = stringResource(
@@ -195,7 +199,7 @@ fun PlaylistScreen(
                                         playlist.tracks.size
                                     ),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = Color.White.copy(alpha = 0.8f)
                                 )
                             }
 

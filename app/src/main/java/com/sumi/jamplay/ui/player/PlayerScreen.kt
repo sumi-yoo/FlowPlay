@@ -29,8 +29,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -84,6 +84,7 @@ import coil.request.SuccessResult
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.sumi.jamplay.R
 import com.sumi.jamplay.ui.playlist.PlaylistViewModel
+import com.sumi.jamplay.ui.theme.JamPlayPurple
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -127,6 +128,7 @@ fun PlayerScreen(
                         palette?.let { p ->
                             vibrantColor = Color(p.vibrantSwatch?.rgb ?: 0xFF1E1E1E.toInt())
                             lightVibrantColor = Color(p.lightVibrantSwatch?.rgb ?: 0xFF3E3E3E.toInt())
+                            playerViewModel.updateVibrantColors(vibrantColor, lightVibrantColor)
                         }
                     }
                 }
@@ -153,11 +155,15 @@ fun PlayerScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(48.dp)
+            ) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back),
-                    tint = contentColor
+                    imageVector = Icons.Filled.ChevronLeft,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -205,9 +211,9 @@ fun PlayerScreen(
                             currentPosition = currentPosition,
                             duration = duration,
                             onSeek = { pos -> playerViewModel.seekTo(pos) },
-                            activeColor = contentColor,
-                            inactiveColor = contentColor.copy(alpha = 0.3f),
-                            thumbColor = contentColor
+                            activeColor = JamPlayPurple,
+                            inactiveColor = Color.White.copy(alpha = 0.25f),
+                            thumbColor = Color.White
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -291,7 +297,7 @@ fun PlayerScreen(
                             Icon(
                                 imageVector = Icons.Filled.Favorite,
                                 contentDescription = "Favorite",
-                                tint = if (isFavorite) Color.Red else Color.White
+                                tint = if (isFavorite) JamPlayPurple else Color.White
                             )
                         }
 
@@ -341,9 +347,9 @@ fun PlayerScreen(
                     currentPosition = currentPosition,
                     duration = duration,
                     onSeek = { pos -> playerViewModel.seekTo(pos) },
-                    activeColor = contentColor,
-                    inactiveColor = contentColor.copy(alpha = 0.3f),
-                    thumbColor = contentColor
+                    activeColor = JamPlayPurple,
+                    inactiveColor = Color.White.copy(alpha = 0.25f),
+                    thumbColor = Color.White
                 )
 
                 Row(
@@ -417,7 +423,7 @@ fun PlayerScreen(
                         Icon(
                             imageVector = Icons.Filled.Favorite,
                             contentDescription = "Favorite",
-                            tint = if (isFavorite) Color.Red else Color.White
+                            tint = if (isFavorite) JamPlayPurple else Color.White
                         )
                     }
 

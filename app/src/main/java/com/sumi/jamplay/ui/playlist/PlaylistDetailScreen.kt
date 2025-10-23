@@ -1,5 +1,6 @@
 package com.sumi.jamplay.ui.playlist
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -35,8 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.sumi.jamplay.R
 import com.sumi.jamplay.data.model.Track
@@ -59,6 +62,12 @@ fun PlaylistDetailScreen(
 
     if (playlist == null) return
 
+    BackHandler {
+        playlistViewModel.clearSelectionTracks()
+        playlistViewModel.updateDeleteTrackMode(false)
+        onBack()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -72,13 +81,17 @@ fun PlaylistDetailScreen(
         ) {
             IconButton(
                 onClick = {
+                    playlistViewModel.clearSelectionTracks()
                     playlistViewModel.updateDeleteTrackMode(false)
                     onBack()
-                }
+                },
+                modifier = Modifier.size(48.dp)
             ) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back)
+                    imageVector = Icons.Filled.ChevronLeft,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
                 )
             }
 
@@ -140,9 +153,13 @@ fun PlaylistDetailScreen(
                                 } else {
                                     onTrackClick(track, tracks)
                                 }
-                            },
+                            }
+                        ,
                         shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        colors = CardDefaults.cardColors(
+                            contentColor = Color.White          // 내부 Text, Icon 색 기본값
+                        )
                     ) {
                         Row(
                             modifier = Modifier
@@ -179,14 +196,19 @@ fun PlaylistDetailScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = track.name,
-                                    style = MaterialTheme.typography.titleMedium,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     text = track.artistName,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color.White.copy(alpha = 0.6f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                             if (playlistViewModel.deleteTrackMode) {

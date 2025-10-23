@@ -38,19 +38,24 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    background = DarkBackground,
-    surface = DarkSurface,
-    onBackground = DarkOnBackground,
-    onSurface = DarkOnSurface,
-    primary = DarkProgressActive,
-    secondary = DarkThumb
+    background = JamPlayBackground,
+    surface = JamPlaySurface,
+    onBackground = JamPlayOnBackground,
+    onSurface = JamPlayOnSurface,
+
+    primary = Color.White,
+    onPrimary = JamPlayPurple,
+    secondary = JamPlayPurpleLight,
+    onSecondary = Color.White,
+
+    primaryContainer = JamPlaySurface,
+    onPrimaryContainer = Color.White,
+    surfaceVariant = JamPlaySurface,
+    onSurfaceVariant = JamPlayOnSurface.copy(alpha = 0.7f),
 )
 
 @Composable
-fun MusicAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
-) {
+fun JamPlayTheme(content: @Composable () -> Unit) {
 
     MaterialTheme(
         colorScheme = DarkColors,

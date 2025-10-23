@@ -11,15 +11,23 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Search
@@ -27,19 +35,26 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
@@ -61,8 +76,8 @@ import com.sumi.jamplay.ui.playlist.PlaylistSelectScreen
 import com.sumi.jamplay.ui.playlist.PlaylistViewModel
 import com.sumi.jamplay.ui.search.SearchScreen
 import com.sumi.jamplay.ui.search.SearchViewViewModel
-import com.sumi.jamplay.ui.theme.DarkBackground
-import com.sumi.jamplay.ui.theme.MusicAppTheme
+import com.sumi.jamplay.ui.theme.JamPlayBackground
+import com.sumi.jamplay.ui.theme.JamPlayTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -98,6 +113,7 @@ class MainActivity : ComponentActivity() {
         // 음악 서비스 시작 (앱 실행 시 백그라운드에서 재생 준비)
         Intent(this, MusicPlayerService::class.java).also { intent ->
             startService(intent)
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
         }
 
         enableEdgeToEdge(
@@ -110,7 +126,7 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            MusicAppTheme {
+            JamPlayTheme {
                 val navController = rememberNavController()
                 MainScreen(navController, playerViewModel)
                 LaunchedEffect(navigateToPlayer) {
@@ -122,15 +138,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        Intent(this, MusicPlayerService::class.java).also { intent ->
-            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-        }
-    }
-
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
         if (isBound) {
             unbindService(serviceConnection)
             isBound = false
@@ -166,7 +175,7 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
-            .background(DarkBackground)
+            .background(JamPlayBackground)
             .windowInsetsPadding(
                 WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
             ),
@@ -280,23 +289,81 @@ fun BottomNavigationBar(navController: NavController) {
                     strokeWidth = 1.dp.toPx()
                 )
             },
-        containerColor = DarkBackground
+        containerColor = JamPlayBackground,
+        tonalElevation = 0.dp
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination?.route
 
         items.forEach { item ->
+            val selected = currentDestination == item.route
+            val scale by animateFloatAsState(
+                targetValue = if (selected) 1.15f else 1f,
+                animationSpec = spring(dampingRatio = 0.5f, stiffness = 200f)
+            )
+            val indicatorAlpha by animateFloatAsState(
+                targetValue = if (selected) 1f else 0f,
+                animationSpec = tween(300)
+            )
+
             NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = item.label) },
-                label = { Text(item.label) },
-                selected = currentDestination == item.route,
+                selected = selected,
                 onClick = {
                     navController.navigate(item.route) {
                         popUpTo("playlist") { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }
-                }
+                },
+                icon = {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = item.label,
+                            modifier = Modifier.graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale
+                            ),
+                            tint = if (selected)
+                                Color.White
+                            else
+                                Color.White.copy(alpha = 0.6f)
+                        )
+                        if (indicatorAlpha > 0f) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .offset(y = 6.dp)
+                                    .height(2.dp)
+                                    .width(18.dp)
+                                    .alpha(indicatorAlpha)
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(Color(0xFF9B6BFF), Color(0xFF4B1F9C))
+                                        ),
+                                        RoundedCornerShape(1.dp)
+                                    )
+                            )
+                        }
+                    }
+                },
+                label = {
+//                    if (selected) {
+                        Text(
+                            item.label,
+                            color = if (selected) Color.White else Color.White.copy(alpha = 0.5f),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+//                    }
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor = Color.Transparent,
+                    selectedIconColor = Color.White,
+                    unselectedIconColor = Color.White.copy(alpha = 0.6f),
+                    selectedTextColor = Color.White,
+                    unselectedTextColor = Color.White.copy(alpha = 0.5f)
+                )
             )
         }
     }
