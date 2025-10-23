@@ -30,6 +30,7 @@ import coil.compose.AsyncImage
 
 @Composable
 fun MiniPlayer(
+    modifier: Modifier,
     viewModel: PlayerViewModel,
     onClick: () -> Unit
 ) {
@@ -38,7 +39,7 @@ fun MiniPlayer(
 
     if (currentTrack != null) {
         Surface(
-            modifier = Modifier
+            modifier = modifier
                 .clickable { onClick() }
                 .padding(8.dp),
             tonalElevation = 4.dp,

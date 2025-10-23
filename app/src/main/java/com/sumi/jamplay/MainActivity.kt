@@ -13,7 +13,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Search
@@ -27,10 +33,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
@@ -52,6 +61,7 @@ import com.sumi.jamplay.ui.playlist.PlaylistSelectScreen
 import com.sumi.jamplay.ui.playlist.PlaylistViewModel
 import com.sumi.jamplay.ui.search.SearchScreen
 import com.sumi.jamplay.ui.search.SearchViewViewModel
+import com.sumi.jamplay.ui.theme.DarkBackground
 import com.sumi.jamplay.ui.theme.MusicAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -91,11 +101,11 @@ class MainActivity : ComponentActivity() {
         }
 
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(
-                Color.Transparent.toArgb(), Color.Transparent.toArgb()
+            statusBarStyle = SystemBarStyle.dark(
+                Color.Transparent.toArgb()
             ),
-            navigationBarStyle = SystemBarStyle.light(
-                Color.Transparent.toArgb(), Color.Transparent.toArgb()
+            navigationBarStyle = SystemBarStyle.dark(
+                Color.Transparent.toArgb()
             )
         )
 
@@ -155,14 +165,21 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
     val currentDestination = navBackStackEntry?.destination?.route
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize()
+            .background(DarkBackground)
+            .windowInsetsPadding(
+                WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+            ),
         bottomBar = {
             // BottomNavigation + MiniPlayer 숨김
             if (currentDestination != "player" && currentDestination != "playlistSelect") {
                 Column {
                     val isHomeScreen = currentDestination != "playlistDetail/{playlistId}"
 
-                    MiniPlayer(viewModel = playerViewModel) {
+                    MiniPlayer(
+                        modifier = if (isHomeScreen) Modifier else Modifier.navigationBarsPadding(),
+                        viewModel = playerViewModel
+                    ) {
                         // 클릭 시 PlayerScreen으로 전환
                         navController.navigate("player") {
                             launchSingleTop = true
@@ -253,8 +270,17 @@ fun BottomNavigationBar(navController: NavController) {
     )
 
     NavigationBar(
-//        containerColor = Color.Transparent,
-//        tonalElevation = 0.dp
+        modifier = Modifier
+            .drawBehind {
+                // 맨 윗줄 구분선
+                drawLine(
+                    color = Color.White.copy(alpha = 0.4f),
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = 1.dp.toPx()
+                )
+            },
+        containerColor = DarkBackground
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination?.route

@@ -173,7 +173,7 @@ fun PlayerScreen(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(end = 30.dp, start = 20.dp),
+                    .padding(30.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AlbumArtwork(currentTrack!!.artworkUrl)

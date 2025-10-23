@@ -23,7 +23,7 @@ val LightProgressActive = Color(0xFF222222)
 val LightThumb = Color(0xFF000000)
 
 // 🌙 Dark
-val DarkBackground = Color(0xFF121212)
+val DarkBackground = Color(0xFF000000)
 val DarkSurface = Color(0xFF1E1E1E)
 val DarkOnBackground = Color(0xFFEDEDED)
 val DarkOnSurface = Color(0xFFCCCCCC)
