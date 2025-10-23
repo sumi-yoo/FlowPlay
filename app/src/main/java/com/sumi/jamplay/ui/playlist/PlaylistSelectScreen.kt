@@ -1,7 +1,10 @@
 package com.sumi.jamplay.ui.playlist
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,15 +21,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,16 +33,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import com.sumi.jamplay.R
 import com.sumi.jamplay.ui.player.PlayerViewModel
 
@@ -192,11 +192,29 @@ fun PlaylistSelectScreen(
             // 새 플레이리스트 버튼
             item {
                 Spacer(Modifier.height(20.dp))
-                Button(
-                    onClick = { playlistViewModel.updateShowCreateDialog(true) },
-                    modifier = Modifier.fillMaxWidth()
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(
+                            width = 1.dp,
+                            color = Color.White.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .background(Color(0xFF1C1C1C))
+                        .clickable { playlistViewModel.updateShowCreateDialog(true) }
+                        .padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(stringResource(R.string.create_new_playlist))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = stringResource(R.string.create_new_playlist),
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
@@ -204,77 +222,9 @@ fun PlaylistSelectScreen(
 
     // 새 플레이리스트 생성 다이얼로그
     if (playlistViewModel.showCreateDialog) {
-        var showError by rememberSaveable { mutableStateOf(false) }
-        var showEmpty by rememberSaveable { mutableStateOf(false) }
-
-        AlertDialog(
-            onDismissRequest = { playlistViewModel.updateShowCreateDialog(false) },
-            title = { Text(stringResource(R.string.new_playlist_dialog_title)) },
-            text = {
-                Column {
-                    TextField(
-                        value = playlistViewModel.newPlaylistName,
-                        onValueChange = {
-                            playlistViewModel.updateNewPlaylistName(it)
-                            showError = false
-                            showEmpty = false
-                        },
-                        label = { Text(stringResource(R.string.playlist_name_label)) },
-                        singleLine = true
-                    )
-                    if (showEmpty) {
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.playlist_name_empty),
-                            color = Color.Red,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    if (showError) {
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.playlist_name_exists),
-                            color = Color.Red,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                val existing = playlists.any { it.name == playlistViewModel.newPlaylistName.trim() }
-                TextButton(onClick = {
-                    when {
-                        // 입력이 아예 없을 때
-                        playlistViewModel.newPlaylistName.isBlank() -> {
-                            showEmpty = true
-                            showError = false
-                        }
-                        // 입력은 됐는데 이미 존재할 때
-                        existing -> {
-                            showEmpty = false
-                            showError = true
-                        }
-                        // 입력도 됐고 존재하지 않을 때 (정상 케이스)
-                        else -> {
-                            playlistViewModel.addPlaylist(playlistViewModel.newPlaylistName)
-                            playlistViewModel.updateNewPlaylistName("")
-                            playlistViewModel.updateShowCreateDialog(false)
-                            showEmpty = false
-                            showError = false
-                        }
-                    }
-                }) {
-                    Text(stringResource(R.string.create))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    playlistViewModel.updateNewPlaylistName("")
-                    playlistViewModel.updateShowCreateDialog(false)
-                }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
+        JamPlayCreatePlaylistDialog(
+            playlistViewModel = playlistViewModel,
+            playlists = playlists
         )
     }
 }

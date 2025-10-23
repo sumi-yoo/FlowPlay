@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -33,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,10 +45,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.sumi.jamplay.R
+import com.sumi.jamplay.data.model.Playlist
 
 @Composable
 fun PlaylistScreen(
@@ -219,78 +224,128 @@ fun PlaylistScreen(
 
     // 새 플레이리스트 생성 다이얼로그
     if (playlistViewModel.showCreateDialog) {
-        var showError by rememberSaveable { mutableStateOf(false) }
-        var showEmpty by rememberSaveable { mutableStateOf(false) }
+        JamPlayCreatePlaylistDialog(
+            playlistViewModel = playlistViewModel,
+            playlists = playlists
+        )
+    }
+}
 
-        AlertDialog(
-            onDismissRequest = { playlistViewModel.updateShowCreateDialog(false) },
-            title = { Text(stringResource(R.string.new_playlist_dialog_title)) },
-            text = {
-                Column {
-                    TextField(
-                        value = playlistViewModel.newPlaylistName,
-                        onValueChange = {
-                            playlistViewModel.updateNewPlaylistName(it)
-                            showError = false
-                            showEmpty = false
-                        },
-                        label = { Text(stringResource(R.string.playlist_name_label)) },
-                        singleLine = true
+@Composable
+fun JamPlayCreatePlaylistDialog(
+    playlistViewModel: PlaylistViewModel,
+    playlists: List<Playlist>
+) {
+    var showError by rememberSaveable { mutableStateOf(false) }
+    var showEmpty by rememberSaveable { mutableStateOf(false) }
+
+    Dialog(
+        onDismissRequest = { playlistViewModel.updateShowCreateDialog(false) },
+        properties = DialogProperties(dismissOnClickOutside = true)
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFF252525))
+                .padding(20.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // 제목
+                Text(
+                    text = stringResource(R.string.new_playlist_dialog_title),
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 18.sp
+                )
+
+                // 입력창
+                TextField(
+                    value = playlistViewModel.newPlaylistName,
+                    onValueChange = {
+                        playlistViewModel.updateNewPlaylistName(it)
+                        showError = false
+                        showEmpty = false
+                    },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.playlist_name_label),
+                            color = Color.White.copy(alpha = 0.5f)
+                        )
+                    },
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF484747),
+                        unfocusedContainerColor = Color(0xFF313131),
+                        cursorColor = Color.White,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // 오류 메시지
+                if (showEmpty) {
+                    Text(
+                        text = stringResource(R.string.playlist_name_empty),
+                        color = Color(0xFFFF6B6B),
+                        fontSize = 13.sp
                     )
-                    if (showEmpty) {
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.playlist_name_empty),
-                            color = Color.Red,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    if (showError) {
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.playlist_name_exists),
-                            color = Color.Red,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
                 }
-            },
-            confirmButton = {
-                val existing = playlists.any { it.name == playlistViewModel.newPlaylistName.trim() }
-                TextButton(onClick = {
+                if (showError) {
+                    Text(
+                        text = stringResource(R.string.playlist_name_exists),
+                        color = Color(0xFFFF6B6B),
+                        fontSize = 13.sp
+                    )
+                }
 
-                    when {
-                        // 입력이 아예 없을 때
-                        playlistViewModel.newPlaylistName.isBlank() -> {
-                            showEmpty = true
-                            showError = false
-                        }
-                        // 입력은 됐는데 이미 존재할 때
-                        existing -> {
-                            showEmpty = false
-                            showError = true
-                        }
-                        // 입력도 됐고 존재하지 않을 때 (정상 케이스)
-                        else -> {
-                            playlistViewModel.addPlaylist(playlistViewModel.newPlaylistName)
+                // 버튼들 (취소 / 확인)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = {
                             playlistViewModel.updateNewPlaylistName("")
                             playlistViewModel.updateShowCreateDialog(false)
-                            showEmpty = false
-                            showError = false
                         }
+                    ) {
+                        Text(stringResource(R.string.cancel), color = Color.White.copy(alpha = 0.7f))
                     }
-                }) {
-                    Text(stringResource(R.string.create))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    playlistViewModel.updateNewPlaylistName("")
-                    playlistViewModel.updateShowCreateDialog(false)
-                }) {
-                    Text(stringResource(R.string.cancel))
+
+                    val existing = playlists.any { it.name == playlistViewModel.newPlaylistName.trim() }
+
+                    TextButton(
+                        onClick = {
+                            when {
+                                playlistViewModel.newPlaylistName.isBlank() -> {
+                                    showEmpty = true
+                                    showError = false
+                                }
+                                existing -> {
+                                    showEmpty = false
+                                    showError = true
+                                }
+                                else -> {
+                                    playlistViewModel.addPlaylist(playlistViewModel.newPlaylistName)
+                                    playlistViewModel.updateNewPlaylistName("")
+                                    playlistViewModel.updateShowCreateDialog(false)
+                                    showEmpty = false
+                                    showError = false
+                                }
+                            }
+                        }
+                    ) {
+                        Text(stringResource(R.string.confirm), color = Color(0xFF6B4EFF), fontWeight = FontWeight.Bold)
+                    }
                 }
             }
-        )
+        }
     }
 }
