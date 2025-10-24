@@ -233,9 +233,16 @@ fun PlaylistSelectScreen(
 
     // 새 플레이리스트 생성 다이얼로그
     if (playlistViewModel.showCreateDialog) {
-        JamPlayCreatePlaylistDialog(
-            playlistViewModel = playlistViewModel,
-            playlists = playlists
+        CreatePlaylistDialog(
+            title = stringResource(R.string.new_playlist_dialog_title),
+            existingNames = playlists.map { it.name },
+            onConfirm = { name ->
+                playlistViewModel.addPlaylist(name)
+            },
+            onDismiss = {
+                playlistViewModel.updateShowCreateDialog(false)
+                playlistViewModel.updateNewPlaylistName("")
+            }
         )
     }
 }

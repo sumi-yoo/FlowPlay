@@ -23,9 +23,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +38,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -58,7 +65,6 @@ import com.sumi.jamplay.ui.theme.JamPlayPurple
 
 @Composable
 fun PlaylistDetailScreen(
-    playlistId: Long,
     playlistViewModel: PlaylistViewModel,
     playerViewModel: PlayerViewModel,
     onTrackClick: (Track, List<Track>) -> Unit,
@@ -66,13 +72,17 @@ fun PlaylistDetailScreen(
     onBack: () -> Unit
 ) {
     val playlist by playlistViewModel.selectedPlaylist.collectAsState()
+    val playlists by playlistViewModel.playlists.collectAsState()
     val currentTrack by playerViewModel.currentTrack.collectAsState()
-    val tracks by playlistViewModel.getTracksOfPlaylist(playlistId).collectAsState(initial = emptyList())
+    val tracks by playlistViewModel.tracks.collectAsState()
     val isPlaying by playerViewModel.isPlaying.collectAsState()
+    val playlistId by playlistViewModel.playlistId.collectAsState()
+    val favoritesPlaylistId = stringResource(R.string.favorites_playlist_name).hashCode().toLong()
 
     if (playlist == null) return
 
     val lifecycleOwner = LocalLifecycleOwner.current
+    var expanded by rememberSaveable { mutableStateOf(false) }
 
     // 화면 라이프사이클 기반 클릭 제어
     DisposableEffect(lifecycleOwner) {
@@ -134,7 +144,7 @@ fun PlaylistDetailScreen(
                     val toDelete = playlistViewModel.deletedTracks.filter { it.value }.keys
                     toDelete.forEach { trackId ->
                         tracks.find { it.id == trackId }?.let {
-                            playlistViewModel.deleteTrackFromPlaylist(playlistId, it)
+                            playlistViewModel.deleteTrackFromPlaylist(track = it)
                         }
                     }
                     playlistViewModel.clearSelectionTracks()
@@ -143,8 +153,43 @@ fun PlaylistDetailScreen(
                     Text(stringResource(R.string.complete))
                 }
             } else {
-                TextButton(onClick = { playlistViewModel.updateDeleteTrackMode(true) }) {
-                    Text(stringResource(R.string.delete))
+                // 드롭다운 메뉴
+                Box {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More options",
+                            tint = Color.White
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        offset = DpOffset(x = (-5).dp, y = 0.dp)
+                    ) {
+                        if (!favoritesPlaylistId.equals(playlistId)) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        stringResource(R.string.rename),
+                                        color = Color.White
+                                    )
+                                },
+                                onClick = {
+                                    expanded = false
+                                    playlistViewModel.updateShowCreateDialog(true)
+                                }
+                            )
+                        }
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.track_delete), color = Color.White) },
+                            onClick = {
+                                expanded = false
+                                playlistViewModel.updateDeleteTrackMode(true)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -281,5 +326,21 @@ fun PlaylistDetailScreen(
                 }
             )
         }
+    }
+
+    // 새 플레이리스트 생성 다이얼로그
+    if (playlistViewModel.showCreateDialog) {
+        CreatePlaylistDialog(
+            title = stringResource(R.string.playlist_rename),
+            initialName = playlist?.name ?: "",
+            existingNames = playlists.map { it.name },
+            onConfirm = { newName ->
+                playlistViewModel.renamePlaylist(newName, tracks)
+            },
+            onDismiss = {
+                playlistViewModel.updateShowCreateDialog(false)
+                playlistViewModel.updateNewPlaylistName("")
+            }
+        )
     }
 }

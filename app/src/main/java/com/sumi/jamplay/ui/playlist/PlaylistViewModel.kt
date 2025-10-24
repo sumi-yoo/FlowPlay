@@ -16,11 +16,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
     private val repository: PlaylistRepository
@@ -39,15 +43,38 @@ class PlaylistViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    /** 선택된 플레이리스트 */
-    private val _selectedPlaylist = MutableStateFlow<Playlist?>(null)
-    val selectedPlaylist: StateFlow<Playlist?> = _selectedPlaylist
+    private val _playlistId = MutableStateFlow<Long?>(null)
+    val playlistId = _playlistId.asStateFlow()
 
     private val _deletePlayListMode = MutableStateFlow(false)
     val deletePlayListMode: StateFlow<Boolean> = _deletePlayListMode
 
+    val selectedPlaylist: StateFlow<Playlist?> = _playlistId
+        .filterNotNull()
+        .distinctUntilChanged()
+        .flatMapLatest { id ->
+            repository.getPlaylistById(id)
+        }
+        .stateIn(
+            viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
+    val tracks: StateFlow<List<Track>> = _playlistId
+        .filterNotNull()
+        .distinctUntilChanged()
+        .flatMapLatest { id ->
+            repository.getTracksOfPlaylist(id)
+        }
+        .stateIn(
+            viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
     var showCreateDialog by mutableStateOf(false)
-        private set   // 외부에서 직접 set 불가
+        private set
 
     var newPlaylistName by mutableStateOf("")
         private set
@@ -64,15 +91,6 @@ class PlaylistViewModel @Inject constructor(
 
     var acceptsClicks by mutableStateOf(true)
         private set
-
-    fun selectPlaylistById(playlistId: Long) {
-        viewModelScope.launch {
-            repository.getPlaylistById(playlistId)
-                .collect { playlist ->
-                    _selectedPlaylist.value = playlist
-                }
-        }
-    }
 
     fun isTrackInPlaylist(playlistId: Long, trackId: Long): Boolean {
         return playlists.value.firstOrNull { it.id == playlistId }?.tracks?.any { it.id == trackId } == true
@@ -92,9 +110,11 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    fun deleteTrackFromPlaylist(playlistId: Long, track: Track) {
-        viewModelScope.launch {
-            repository.deleteTrackFromPlaylist(playlistId, track)
+    fun deleteTrackFromPlaylist(playlistId: Long? = _playlistId.value, track: Track) {
+        playlistId?.let {
+            viewModelScope.launch {
+                repository.deleteTrackFromPlaylist(it, track)
+            }
         }
     }
 
@@ -140,6 +160,20 @@ class PlaylistViewModel @Inject constructor(
 
     fun clearSelectionTracks() {
         deletedTracks.clear()
+    }
+
+    fun setPlaylistId(id: Long) {
+        _playlistId.value = id
+    }
+
+    fun renamePlaylist(newName: String, tracks: List<Track>) {
+        _playlistId.value?.let {
+            viewModelScope.launch {
+                repository.renamePlaylistWithTracks(it, newName, tracks)
+                val newId = newName.trim().hashCode().toLong()
+                setPlaylistId(newId)
+            }
+        }
     }
 
     fun enableClicks() { acceptsClicks = true }

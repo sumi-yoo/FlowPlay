@@ -74,12 +74,12 @@ fun PlaylistScreen(
             fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
-                .padding(horizontal = 16.dp)
         }
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(start = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -105,7 +105,7 @@ fun PlaylistScreen(
                     IconButton(onClick = { expanded = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "더보기"
+                            contentDescription = "More options"
                         )
                     }
 
@@ -115,14 +115,14 @@ fun PlaylistScreen(
                         offset = DpOffset(x = (-5).dp, y = 0.dp)
                     ) {
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.add)) },
+                            text = { Text(stringResource(R.string.add), color = Color.White) },
                             onClick = {
                                 expanded = false
                                 playlistViewModel.updateShowCreateDialog(true)
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.delete)) },
+                            text = { Text(stringResource(R.string.delete), color = Color.White) },
                             onClick = {
                                 expanded = false
                                 playlistViewModel.clearSelectionPlaylists()
@@ -138,7 +138,7 @@ fun PlaylistScreen(
 
         if (playlists.isEmpty()) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -147,7 +147,9 @@ fun PlaylistScreen(
                 )
             }
         } else {
-            LazyColumn {
+            LazyColumn(
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
                 items(playlists) { playlist ->
                     val checked = playlistViewModel.deletedPlaylists[playlist.id] ?: false
                     Card(
@@ -228,23 +230,34 @@ fun PlaylistScreen(
 
     // 새 플레이리스트 생성 다이얼로그
     if (playlistViewModel.showCreateDialog) {
-        JamPlayCreatePlaylistDialog(
-            playlistViewModel = playlistViewModel,
-            playlists = playlists
+        CreatePlaylistDialog(
+            title = stringResource(R.string.new_playlist_dialog_title),
+            existingNames = playlists.map { it.name },
+            onConfirm = { name ->
+                playlistViewModel.addPlaylist(name)
+            },
+            onDismiss = {
+                playlistViewModel.updateShowCreateDialog(false)
+                playlistViewModel.updateNewPlaylistName("")
+            }
         )
     }
 }
 
 @Composable
-fun JamPlayCreatePlaylistDialog(
-    playlistViewModel: PlaylistViewModel,
-    playlists: List<Playlist>
+fun CreatePlaylistDialog(
+    title: String,
+    initialName: String = "",
+    existingNames: List<String>,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
 ) {
+    var name by rememberSaveable { mutableStateOf(initialName) }
     var showError by rememberSaveable { mutableStateOf(false) }
     var showEmpty by rememberSaveable { mutableStateOf(false) }
 
     Dialog(
-        onDismissRequest = { playlistViewModel.updateShowCreateDialog(false) },
+        onDismissRequest = onDismiss,
         properties = DialogProperties(dismissOnClickOutside = true)
     ) {
         Box(
@@ -259,7 +272,7 @@ fun JamPlayCreatePlaylistDialog(
             ) {
                 // 제목
                 Text(
-                    text = stringResource(R.string.new_playlist_dialog_title),
+                    text = title,
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 18.sp
@@ -267,15 +280,15 @@ fun JamPlayCreatePlaylistDialog(
 
                 // 입력창
                 TextField(
-                    value = playlistViewModel.newPlaylistName,
+                    value = name,
                     onValueChange = {
-                        playlistViewModel.updateNewPlaylistName(it)
+                        name = it
                         showError = false
                         showEmpty = false
                     },
                     placeholder = {
                         Text(
-                            stringResource(R.string.playlist_name_label),
+                            text = stringResource(R.string.playlist_name_label),
                             color = Color.White.copy(alpha = 0.5f)
                         )
                     },
@@ -303,7 +316,7 @@ fun JamPlayCreatePlaylistDialog(
                 }
                 if (showError) {
                     Text(
-                        text = stringResource(R.string.playlist_name_exists),
+                        text = if (initialName.isEmpty()) stringResource(R.string.playlist_name_exists) else  stringResource(R.string.playlist_name_same_as_before),
                         color = Color(0xFFFF6B6B),
                         fontSize = 13.sp
                     )
@@ -314,39 +327,35 @@ fun JamPlayCreatePlaylistDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(
-                        onClick = {
-                            playlistViewModel.updateNewPlaylistName("")
-                            playlistViewModel.updateShowCreateDialog(false)
-                        }
-                    ) {
+                    TextButton(onClick = onDismiss) {
                         Text(stringResource(R.string.cancel), color = Color.White.copy(alpha = 0.7f))
                     }
 
-                    val existing = playlists.any { it.name == playlistViewModel.newPlaylistName.trim() }
+                    val exists = existingNames.any { it.equals(name.trim(), ignoreCase = true) }
 
                     TextButton(
                         onClick = {
                             when {
-                                playlistViewModel.newPlaylistName.isBlank() -> {
+                                name.isBlank() -> {
                                     showEmpty = true
                                     showError = false
                                 }
-                                existing -> {
+                                exists -> {
                                     showEmpty = false
                                     showError = true
                                 }
                                 else -> {
-                                    playlistViewModel.addPlaylist(playlistViewModel.newPlaylistName)
-                                    playlistViewModel.updateNewPlaylistName("")
-                                    playlistViewModel.updateShowCreateDialog(false)
-                                    showEmpty = false
-                                    showError = false
+                                    onConfirm(name.trim())
+                                    onDismiss()
                                 }
                             }
                         }
                     ) {
-                        Text(stringResource(R.string.confirm), color = Color(0xFF6B4EFF), fontWeight = FontWeight.Bold)
+                        Text(
+                            text = stringResource(R.string.confirm),
+                            color = Color(0xFF6B4EFF),
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }

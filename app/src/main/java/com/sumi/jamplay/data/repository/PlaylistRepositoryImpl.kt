@@ -35,23 +35,26 @@ class PlaylistRepositoryImpl @Inject constructor(
             }
         }
 
-    override fun getPlaylistById(playlistId: Long): Flow<Playlist> {
-        return dao.getPlaylistById(playlistId).map { pl ->
-            Playlist(
-                id = pl.playlist.id,
-                name = pl.playlist.name,
-                tracks = pl.tracks.map { t ->
-                    Track(
-                        id = t.id,
-                        name = t.name,
-                        artistName = t.artistName,
-                        albumName = t.albumName,
-                        artworkUrl = t.artworkUrl,
-                        streamUrl = t.streamUrl
+    override fun getPlaylistById(playlistId: Long): Flow<Playlist?> {
+        return dao.getPlaylistById(playlistId)
+            .map { pl ->
+                pl?.let {
+                    Playlist(
+                        id = it.playlist.id,
+                        name = it.playlist.name,
+                        tracks = it.tracks.map { t ->
+                            Track(
+                                id = t.id,
+                                name = t.name,
+                                artistName = t.artistName,
+                                albumName = t.albumName,
+                                artworkUrl = t.artworkUrl,
+                                streamUrl = t.streamUrl
+                            )
+                        }
                     )
                 }
-            )
-        }
+            }
     }
 
     // 플레이리스트 추가
@@ -98,5 +101,27 @@ class PlaylistRepositoryImpl @Inject constructor(
                 )
             }
         }
+    }
+
+    override suspend fun renamePlaylistWithTracks(
+        oldId: Long,
+        newName: String,
+        tracks: List<Track>
+    ) {
+        val newId = newName.trim().hashCode().toLong()
+        val newEntity = PlaylistEntity(id = newId, name = newName.trim())
+
+        val trackEntities = tracks.map {
+            TrackEntity(
+                id = it.id,
+                name = it.name,
+                artistName = it.artistName,
+                albumName = it.albumName,
+                artworkUrl = it.artworkUrl,
+                streamUrl = it.streamUrl
+            )
+        }
+
+        dao.renamePlaylistWithTracks(oldId, newEntity, trackEntities)
     }
 }

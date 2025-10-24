@@ -66,4 +66,29 @@ interface PlaylistDao {
         ORDER BY t.name ASC
     """)
     fun getTracksOfPlaylist(playlistId: Long): Flow<List<TrackEntity>>
+
+    // 플레이리스트 이름 변경 (삭제 → 추가 → 트랙 재등록) 트랜잭션
+    @Transaction
+    suspend fun renamePlaylistWithTracks(
+        oldId: Long,
+        newPlaylist: PlaylistEntity,
+        tracks: List<TrackEntity>
+    ) {
+        // 기존 플레이리스트 삭제
+        deletePlaylist(oldId)
+
+        // 새 플레이리스트 추가
+        insertPlaylist(newPlaylist)
+
+        // 트랙 관계 재등록
+        tracks.forEach { track ->
+            insertTrack(track)
+            insertPlaylistTrackCrossRef(
+                PlaylistTrackCrossRef(
+                    playlistId = newPlaylist.id,
+                    trackId = track.id
+                )
+            )
+        }
+    }
 }
