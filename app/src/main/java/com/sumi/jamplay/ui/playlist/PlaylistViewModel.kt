@@ -62,6 +62,9 @@ class PlaylistViewModel @Inject constructor(
 
     val deletedTracks = mutableStateMapOf<Long, Boolean>()
 
+    var acceptsClicks by mutableStateOf(true)
+        private set
+
     fun selectPlaylistById(playlistId: Long) {
         viewModelScope.launch {
             repository.getPlaylistById(playlistId)
@@ -138,4 +141,8 @@ class PlaylistViewModel @Inject constructor(
     fun clearSelectionTracks() {
         deletedTracks.clear()
     }
+
+    fun enableClicks() { acceptsClicks = true }
+
+    fun disableClicks() { acceptsClicks = false }
 }

@@ -9,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -45,20 +45,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
 import com.sumi.jamplay.R
 import com.sumi.jamplay.data.model.Track
+import com.sumi.jamplay.ui.player.MiniPlayerScreen
 import com.sumi.jamplay.ui.player.PlayingWave
 import com.sumi.jamplay.ui.player.PlayerViewModel
 import com.sumi.jamplay.ui.theme.JamPlayPurple
 
 @Composable
 fun PlaylistDetailScreen(
-    padding: PaddingValues,
     playlistId: Long,
     playlistViewModel: PlaylistViewModel,
     playerViewModel: PlayerViewModel,
     onTrackClick: (Track, List<Track>) -> Unit,
+    onMiniPlayerClick: () -> Unit,
     onBack: () -> Unit
 ) {
     val playlist by playlistViewModel.selectedPlaylist.collectAsState()
@@ -67,6 +71,22 @@ fun PlaylistDetailScreen(
     val isPlaying by playerViewModel.isPlaying.collectAsState()
 
     if (playlist == null) return
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 화면 라이프사이클 기반 클릭 제어
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> playlistViewModel.enableClicks()
+                Lifecycle.Event.ON_PAUSE,
+                Lifecycle.Event.ON_STOP -> playlistViewModel.disableClicks()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     BackHandler {
         playlistViewModel.clearSelectionTracks()
@@ -133,7 +153,14 @@ fun PlaylistDetailScreen(
 
         if (tracks.isEmpty()) {
             Box(
-                modifier = Modifier.fillMaxSize().padding(end = 16.dp, start = 16.dp, bottom = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = if (currentTrack != null) 0.dp else 16.dp
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -143,7 +170,14 @@ fun PlaylistDetailScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(end = 16.dp, start = 16.dp, bottom = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = if (currentTrack != null) 0.dp else 16.dp
+                    )
             ) {
                 items(tracks) { track ->
                     val isCurrentTrack = currentTrack?.id == track.id
@@ -156,7 +190,7 @@ fun PlaylistDetailScreen(
                             .clickable {
                                 if (playlistViewModel.deleteTrackMode) {
                                     playlistViewModel.deletedTracks[track.id] = !(playlistViewModel.deletedTracks[track.id] ?: false)
-                                } else {
+                                } else if (playlistViewModel.acceptsClicks) {
                                     onTrackClick(track, tracks)
                                 }
                             }
@@ -237,6 +271,15 @@ fun PlaylistDetailScreen(
                     }
                 }
             }
+        }
+
+        if (currentTrack != null) {
+            MiniPlayerScreen(
+                viewModel = playerViewModel,
+                onClick = {
+                    onMiniPlayerClick()
+                }
+            )
         }
     }
 }

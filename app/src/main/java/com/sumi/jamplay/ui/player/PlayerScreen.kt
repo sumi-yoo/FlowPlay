@@ -113,26 +113,8 @@ fun PlayerScreen(
         favoriteTracks.any { it.id == currentTrack?.id }
     }
 
-    var vibrantColor by remember { mutableStateOf(Color(0xFF1E1E1E)) }
-    var lightVibrantColor by remember { mutableStateOf(Color(0xFF3E3E3E)) }
-
-    val context = LocalContext.current
-    LaunchedEffect(currentTrack?.artworkUrl) {
-        withContext(Dispatchers.IO) {
-            try {
-                val bitmap = CoilImageLoader.getBitmap(context, currentTrack?.artworkUrl)
-                bitmap?.let {
-                    Palette.from(it).generate { palette ->
-                        palette?.let { p ->
-                            vibrantColor = Color(p.vibrantSwatch?.rgb ?: 0xFF1E1E1E.toInt())
-                            lightVibrantColor = Color(p.lightVibrantSwatch?.rgb ?: 0xFF3E3E3E.toInt())
-                            playerViewModel.updateVibrantColors(vibrantColor, lightVibrantColor)
-                        }
-                    }
-                }
-            } catch (_: Exception) {}
-        }
-    }
+    val vibrantColor by playerViewModel.vibrantColor.collectAsState()
+    val lightVibrantColor by playerViewModel.lightVibrantColor.collectAsState()
     val contentColor = Color.White
 
     // 배경 + 오버레이

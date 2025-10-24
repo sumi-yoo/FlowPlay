@@ -32,8 +32,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
 @Composable
-fun MiniPlayer(
-    modifier: Modifier,
+fun MiniPlayerScreen(
     viewModel: PlayerViewModel,
     onClick: () -> Unit
 ) {
@@ -44,7 +43,7 @@ fun MiniPlayer(
 
     if (currentTrack != null) {
         Surface(
-            modifier = modifier
+            modifier = Modifier
                 .clickable { onClick() }
                 .padding(8.dp)
                 .clip(RoundedCornerShape(12.dp))

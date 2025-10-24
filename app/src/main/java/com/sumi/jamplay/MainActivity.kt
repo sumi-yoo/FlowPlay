@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
@@ -32,7 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -67,7 +65,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sumi.jamplay.service.MusicPlayerService
-import com.sumi.jamplay.ui.player.MiniPlayer
+import com.sumi.jamplay.ui.player.MiniPlayerScreen
 import com.sumi.jamplay.ui.player.PlayerScreen
 import com.sumi.jamplay.ui.player.PlayerViewModel
 import com.sumi.jamplay.ui.playlist.PlaylistDetailScreen
@@ -181,12 +179,9 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
             ),
         bottomBar = {
             // BottomNavigation + MiniPlayer 숨김
-            if (currentDestination != "player" && currentDestination != "playlistSelect") {
+            if (currentDestination == "playlist" || currentDestination == "search") {
                 Column {
-                    val isHomeScreen = currentDestination != "playlistDetail/{playlistId}"
-
-                    MiniPlayer(
-                        modifier = if (isHomeScreen) Modifier else Modifier.navigationBarsPadding(),
+                    MiniPlayerScreen(
                         viewModel = playerViewModel
                     ) {
                         // 클릭 시 PlayerScreen으로 전환
@@ -194,9 +189,7 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
                             launchSingleTop = true
                         }
                     }
-                    if (isHomeScreen) {
-                        BottomNavigationBar(navController)
-                    }
+                    BottomNavigationBar(navController)
                 }
             }
         }
@@ -254,13 +247,18 @@ fun MainScreen(navController: NavHostController, playerViewModel: PlayerViewMode
                 }
 
                 PlaylistDetailScreen(
-                    padding = padding,
                     playlistId = playlistId,
                     playlistViewModel = playlistViewModel,
                     playerViewModel = playerViewModel,
                     onTrackClick = { track, trackList ->
                         playerViewModel.play(track, trackList)
                         navController.navigate("player")
+                    },
+                    onMiniPlayerClick = {
+                        // 클릭 시 PlayerScreen으로 전환
+                        navController.navigate("player") {
+                            launchSingleTop = true
+                        }
                     },
                     onBack = {
                         navController.popBackStack()
@@ -348,14 +346,12 @@ fun BottomNavigationBar(navController: NavController) {
                     }
                 },
                 label = {
-//                    if (selected) {
-                        Text(
-                            item.label,
-                            color = if (selected) Color.White else Color.White.copy(alpha = 0.5f),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-//                    }
+                    Text(
+                        item.label,
+                        color = if (selected) Color.White else Color.White.copy(alpha = 0.5f),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 },
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = Color.Transparent,

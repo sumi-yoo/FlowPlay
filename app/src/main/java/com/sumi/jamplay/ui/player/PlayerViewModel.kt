@@ -78,6 +78,12 @@ class PlayerViewModel : ViewModel() {
         viewModelScope.launch {
             service.duration.collect { _duration.value = it }
         }
+        viewModelScope.launch {
+            service.vibrantColor.collect { _vibrantColor.value = it }
+        }
+        viewModelScope.launch {
+            service.lightVibrantColor.collect { _lightVibrantColor.value = it }
+        }
     }
 
     fun play(track: Track, tracks: List<Track>) {

@@ -16,17 +16,20 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.compose.ui.graphics.Color
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.palette.graphics.Palette
 import coil.ImageLoader
 import coil.request.ImageRequest
 import com.sumi.jamplay.MainActivity
 import com.sumi.jamplay.R
 import com.sumi.jamplay.data.datastore.PlayerPreferencesDataStore
 import com.sumi.jamplay.data.model.Track
+import com.sumi.jamplay.ui.player.CoilImageLoader
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -117,6 +120,12 @@ class MusicPlayerService : Service() {
 
     private val _duration = MutableStateFlow(0L)
     val duration: StateFlow<Long> = _duration.asStateFlow()
+
+    private val _vibrantColor = MutableStateFlow(Color(0xFF1E1E1E))
+    val vibrantColor: StateFlow<Color> = _vibrantColor.asStateFlow()
+
+    private val _lightVibrantColor = MutableStateFlow(Color(0xFF3E3E3E))
+    val lightVibrantColor: StateFlow<Color> = _lightVibrantColor.asStateFlow()
 
     private var positionUpdateJob: Job? = null
 
@@ -348,6 +357,7 @@ class MusicPlayerService : Service() {
         exoPlayer.play()
         _isPlaying.value = true
         _currentTrack.value = track
+        updatePaletteColors(track.artworkUrl)
 
         updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
         showForegroundNotification()
@@ -394,6 +404,7 @@ class MusicPlayerService : Service() {
         exoPlayer.pause()
         _isPlaying.value = false
         _currentTrack.value = track
+        updatePaletteColors(track.artworkUrl)
 
         updatePlaybackState(PlaybackStateCompat.STATE_PAUSED)
         showForegroundNotification()
@@ -507,6 +518,25 @@ class MusicPlayerService : Service() {
         }
     }
 
+    private fun updatePaletteColors(artworkUrl: String?) {
+        if (artworkUrl.isNullOrEmpty()) return
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val bitmap = CoilImageLoader.getBitmap(applicationContext, artworkUrl)
+                bitmap?.let {
+                    Palette.from(it).generate { palette ->
+                        palette?.let { p ->
+                            val vib = Color(p.vibrantSwatch?.rgb ?: 0xFF1E1E1E.toInt())
+                            val lightVib = Color(p.lightVibrantSwatch?.rgb ?: 0xFF3E3E3E.toInt())
+                            _vibrantColor.value = vib
+                            _lightVibrantColor.value = lightVib
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+    }
 
     inner class LocalBinder : Binder() {
         fun getService(): MusicPlayerService = this@MusicPlayerService
